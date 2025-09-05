@@ -4,7 +4,7 @@ let BASE_URL;
 
 if (process.env.NODE_ENV === "production") {
   console.log("Running in Production Mode");
-  // BASE_URL = "https://backend-4hlv.onrender.com/api";
+  BASE_URL = "https://quotationmaker.onrender.com/api";
 } else {
   console.log("Running in Development Mode");
   BASE_URL = "http://localhost:5000/api";
