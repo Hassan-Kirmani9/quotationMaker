@@ -448,9 +448,7 @@ const generateQuotationPDF = async (req, res) => {
       });
     }
 
-    
     const configuration = await Configuration.findOne({ user: req.user._id });
-
     
     const subtotal = quotation.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
     const discountValue = quotation.discountValue || 0;
@@ -462,7 +460,7 @@ const generateQuotationPDF = async (req, res) => {
     const taxAmount = (afterDiscount * taxRate) / 100;
     const totalAmount = afterDiscount + taxAmount;
 
-    
+
     const formatCurrency = (amount) => {
       const currencySymbols = {
         'USD': '$',
@@ -488,7 +486,7 @@ const generateQuotationPDF = async (req, res) => {
       })}`;
     };
 
-    
+
     const formatDate = (date) => {
       return new Date(date).toLocaleDateString('en-GB', {
         day: '2-digit',
@@ -497,7 +495,7 @@ const generateQuotationPDF = async (req, res) => {
       });
     };
 
-    
+
     const htmlTemplate = `
    <!DOCTYPE html>
    <html>
@@ -649,11 +647,21 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
    </html>
    `;
 
-    
+
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-extensions'
+      ]
     });
     const page = await browser.newPage();
 
@@ -672,7 +680,7 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
 
     await browser.close();
 
-    
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${quotation.status}-${quotation.quotationNo}.pdf"`);
 
