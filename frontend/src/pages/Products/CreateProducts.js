@@ -8,7 +8,7 @@ import { Input, Label, Button, HelperText } from '@windmill/react-ui'
 
 function CreateProducts() {
   const history = useHistory()
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -26,14 +26,14 @@ function CreateProducts() {
       ...prev,
       [name]: name === 'sellingPrice' || name === 'purchasePrice' ? parseFloat(value) || 0 : value
     }))
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }))
     }
-    
+
     if (apiError) {
       setApiError('')
     }
@@ -66,7 +66,7 @@ function CreateProducts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -83,7 +83,7 @@ function CreateProducts() {
       }
 
       const response = await post("/products", cleanedData)
-      
+
       if (response.success) {
         alert('Product created successfully!')
         history.push('/app/products')
@@ -92,7 +92,7 @@ function CreateProducts() {
       }
     } catch (error) {
       console.error('Error creating product:', error)
-      
+
       if (error.response?.data?.message) {
         setApiError(error.response.data.message)
       } else if (error.response?.data?.error) {
@@ -123,9 +123,9 @@ function CreateProducts() {
     <>
       <div className="flex justify-between items-center mb-6">
         <PageTitle>Add New Product</PageTitle>
-        <Button 
+        <Button
           type="button"
-          layout="outline" 
+          layout="outline"
           onClick={handleCancel}
           disabled={loading}
         >
@@ -135,7 +135,7 @@ function CreateProducts() {
 
       <div className="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
         <SectionTitle>Product Information</SectionTitle>
-        
+
         <form onSubmit={handleSubmit}>
           {apiError && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -146,12 +146,12 @@ function CreateProducts() {
           <div className="grid grid-cols-1 gap-4">
             <Label>
               <span>Product Name *</span>
-              <Input 
-                className="mt-1" 
+              <Input
+                className="mt-1"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Enter product name" 
+                placeholder="Enter product name"
                 required
                 valid={!errors.name}
                 maxLength={200}
@@ -164,7 +164,7 @@ function CreateProducts() {
             <Label>
               <span>Description</span>
               <textarea
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="mt-1 block w-full pt-2 pl-2 border-2 border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
@@ -180,15 +180,15 @@ function CreateProducts() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Label>
                 <span>Purchase Price *</span>
-                <Input 
-                  className="mt-1" 
+                <Input
+                  className="mt-1"
                   name="purchasePrice"
                   type="number"
                   step="0.01"
                   min="0"
                   value={formData.purchasePrice}
                   onChange={handleInputChange}
-                  placeholder="0.00" 
+                  placeholder="0.00"
                   required
                   valid={!errors.purchasePrice}
                 />
@@ -199,15 +199,15 @@ function CreateProducts() {
 
               <Label>
                 <span>Selling Price *</span>
-                <Input 
-                  className="mt-1" 
+                <Input
+                  className="mt-1"
                   name="sellingPrice"
                   type="number"
                   step="0.01"
                   min="0"
                   value={formData.sellingPrice}
                   onChange={handleInputChange}
-                  placeholder="0.00" 
+                  placeholder="0.00"
                   required
                   valid={!errors.sellingPrice}
                 />
@@ -219,17 +219,17 @@ function CreateProducts() {
           </div>
 
           <div className="flex justify-end space-x-4 mt-6">
-            <Button 
+            <Button
               type="button"
-              layout="outline" 
+              layout="outline"
               onClick={handleCancel}
               disabled={loading}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
-              style={{backgroundColor:"#AA1A21"}}
+              style={{ backgroundColor: "#AA1A21" }}
               className="text-white"
               disabled={loading}
             >

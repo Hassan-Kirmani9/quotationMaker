@@ -16,11 +16,6 @@ const configurationSchema = new mongoose.Schema({
       type: String,
       trim: true,
       maxlength: [50, 'Account number cannot exceed 50 characters']
-    },
-    routingNumber: {
-      type: String,
-      trim: true,
-      maxlength: [50, 'Routing number cannot exceed 50 characters']
     }
   },
   business: {
@@ -28,6 +23,12 @@ const configurationSchema = new mongoose.Schema({
       type: String,
       trim: true,
       maxlength: [150, 'Business name cannot exceed 150 characters']
+    },
+    nameColor: {
+      type: String,
+      trim: true,
+      default: '#333333',
+      match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Please enter a valid hex color code']
     },
     address: {
       type: String,
@@ -80,11 +81,6 @@ const configurationSchema = new mongoose.Schema({
       type: String,
       trim: true,
       maxlength: [2000, 'Terms cannot exceed 2000 characters']
-    },
-    notes: {
-      type: String,
-      trim: true,
-      maxlength: [1000, 'Notes cannot exceed 1000 characters']
     },
     prefix: {
       type: String,

@@ -29,7 +29,8 @@ function CreateConfiguration() {
       validity: 30,
       terms: '',
       notes: '',
-      prefix: 'QUO'
+      quotationPrefix: 'QUO',
+      invoicePrefix: 'INV'
     }
   })
 
@@ -60,8 +61,8 @@ function CreateConfiguration() {
 
   const validateForm = () => {
     const newErrors = {}
-    const requiredFields = {
-      quotation: ['validity', 'prefix']
+    requiredFields = {
+      quotation: ['validity', 'quotationPrefix', 'invoicePrefix']
     }
 
     Object.entries(requiredFields).forEach(([section, fields]) => {
@@ -196,11 +197,11 @@ function CreateConfiguration() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Label>
               <span>Quotation Validity (Days) *</span>
-              <Input 
-                name="quotation.validity" 
-                value={form.quotation.validity} 
-                onChange={handleChange} 
-                valid={!errors.quotation?.validity} 
+              <Input
+                name="quotation.validity"
+                value={form.quotation.validity}
+                onChange={handleChange}
+                valid={!errors.quotation?.validity}
                 type="number"
                 min="1"
                 max="365"
@@ -209,14 +210,19 @@ function CreateConfiguration() {
             </Label>
             <Label>
               <span>Quotation Prefix *</span>
-              <Input name="quotation.prefix" value={form.quotation.prefix} onChange={handleChange} valid={!errors.quotation?.prefix} />
-              {errors.quotation?.prefix && <HelperText valid={false}>{errors.quotation.prefix}</HelperText>}
+              <Input name="quotation.quotationPrefix" value={form.quotation.quotationPrefix} onChange={handleChange} valid={!errors.quotation?.quotationPrefix} />
+              {errors.quotation?.quotationPrefix && <HelperText valid={false}>{errors.quotation.quotationPrefix}</HelperText>}
+            </Label>
+            <Label>
+              <span>Invoice Prefix *</span>
+              <Input name="quotation.invoicePrefix" value={form.quotation.invoicePrefix} onChange={handleChange} valid={!errors.quotation?.invoicePrefix} />
+              {errors.quotation?.invoicePrefix && <HelperText valid={false}>{errors.quotation.invoicePrefix}</HelperText>}
             </Label>
             <Label className="md:col-span-2">
               <span>Terms & Conditions</span>
-              <textarea 
-                name="quotation.terms" 
-                value={form.quotation.terms} 
+              <textarea
+                name="quotation.terms"
+                value={form.quotation.terms}
                 onChange={handleChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 rows="4"
@@ -225,9 +231,9 @@ function CreateConfiguration() {
             </Label>
             <Label className="md:col-span-2">
               <span>Default Notes</span>
-              <textarea 
-                name="quotation.notes" 
-                value={form.quotation.notes} 
+              <textarea
+                name="quotation.notes"
+                value={form.quotation.notes}
                 onChange={handleChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 rows="3"

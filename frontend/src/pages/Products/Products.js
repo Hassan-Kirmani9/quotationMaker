@@ -47,7 +47,7 @@ function Products() {
 
     const [searchTerm, setSearchTerm] = useState('')
 
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [editFormData, setEditFormData] = useState({
@@ -60,7 +60,7 @@ function Products() {
     const [editErrors, setEditErrors] = useState({})
     const [editApiError, setEditApiError] = useState('')
 
-    
+
     const fetchProducts = async (page = 1, search = '') => {
         try {
             setLoading(true)
@@ -90,7 +90,7 @@ function Products() {
         }
     }
 
-    
+
     const handleSearch = (e) => {
         const value = e.target.value
         setSearchTerm(value)
@@ -270,7 +270,7 @@ function Products() {
                 </Button>
             </div>
 
-            {}
+            { }
             <div className="mb-4">
                 <Input
                     placeholder="Search products by name or description..."
@@ -306,7 +306,7 @@ function Products() {
                 </div>
             ) : (
                 <>
-                    {}
+                    { }
                     <div className="hidden md:block">
                         <TableContainer className="mb-8">
                             <Table>
@@ -376,7 +376,7 @@ function Products() {
                         </TableContainer>
                     </div>
 
-                    {}
+                    { }
                     <div className="block md:hidden">
                         <div className="space-y-4 mb-8">
                             {dataTable.map((product) => (
@@ -384,7 +384,7 @@ function Products() {
                                     key={product._id}
                                     className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative"
                                 >
-                                    {}
+                                    { }
                                     <div className="flex justify-between items-start mb-4">
                                         <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4">
                                             {product.name}
@@ -407,7 +407,7 @@ function Products() {
                                         </div>
                                     </div>
 
-                                    {}
+                                    { }
                                     {product.description && (
                                         <div className="flex items-start mb-4 text-gray-600">
                                             <IoDocument className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
@@ -417,7 +417,7 @@ function Products() {
                                         </div>
                                     )}
 
-                                    {}
+                                    { }
                                     <div className="flex items-center mb-3 text-gray-600">
                                         <IoPricetagsOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <div className="text-sm">
@@ -426,7 +426,7 @@ function Products() {
                                         </div>
                                     </div>
 
-                                    {}
+                                    { }
                                     <div className="flex items-center">
                                         <IoPricetag className="w-5 h-5 mr-3 text-purple-600" />
                                         <div>
@@ -440,7 +440,7 @@ function Products() {
                             ))}
                         </div>
 
-                        {}
+                        { }
                         {totalPages > 1 && (
                             <div className="flex justify-center">
                                 <Pagination
@@ -455,7 +455,7 @@ function Products() {
                 </>
             )}
 
-            {}
+            { }
             <Modal isOpen={isModalOpen} onClose={closeModal}>
                 <ModalHeader>Edit Product</ModalHeader>
                 <ModalBody className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
@@ -486,7 +486,7 @@ function Products() {
                             <Label>
                                 <span>Description</span>
                                 <textarea
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    className="mt-1 block w-full pt-2 pl-2 border-2 border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     name="description"
                                     value={editFormData.description}
                                     onChange={handleEditInputChange}

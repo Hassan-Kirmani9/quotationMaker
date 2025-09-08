@@ -17,8 +17,7 @@ function CreateQuotations() {
     discountValue: 0,
     taxRate: 0,
     currency: '',
-    notes: '',
-    terms: ''
+    
   })
 
   const [quotationItems, setQuotationItems] = useState([
@@ -80,9 +79,7 @@ function CreateQuotations() {
     const newSubtotal = quotationItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0)
     setSubtotal(newSubtotal)
 
-    const newDiscountAmount = formData.discountType === 'percentage'
-      ? (newSubtotal * formData.discountValue) / 100
-      : formData.discountValue
+    const newDiscountAmount = (newSubtotal * formData.discountValue) / 100
 
     setDiscountAmount(newDiscountAmount)
 
@@ -424,34 +421,29 @@ function CreateQuotations() {
                 readOnly
               />
             </Label>
-
             <Label>
-              <span>Discount Type</span>
-              <Select
-                name="discountType"
-                value={formData.discountType}
-                onChange={handleInputChange}
-                className="mt-1"
-              >
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed Amount</option>
-              </Select>
+              <span>Discount Value (%)</span>
+              <div className="relative mt-1">
+                <Input
+                  name="discountValue"
+                  value={formData.discountValue}
+                  onChange={handleInputChange}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  style={{
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'textfield'
+                  }}
+                  className="pr-8"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">%</span>
+                </div>
+              </div>
             </Label>
-
-            <Label>
-              <span>Discount Value</span>
-              <Input
-                name="discountValue"
-                value={formData.discountValue}
-                onChange={handleInputChange}
-                className="mt-1"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder={formData.discountType === 'percentage' ? '0%' : '0.00'}
-              />
-            </Label>
-
             <Label>
               <span>Discount Amount</span>
               <Input
@@ -491,33 +483,6 @@ function CreateQuotations() {
                 className="mt-1 text-lg font-semibold"
                 type="number"
                 readOnly
-              />
-            </Label>
-          </div>
-
-          {/* Additional Info */}
-          <div className="grid grid-cols-1 gap-4 mb-6">
-            <Label>
-              <span>Terms & Conditions</span>
-              <Textarea
-                className="mt-1"
-                name="terms"
-                value={formData.terms}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Enter terms and conditions"
-              />
-            </Label>
-
-            <Label>
-              <span>Notes</span>
-              <Textarea
-                className="mt-1"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="Enter any additional notes"
               />
             </Label>
           </div>

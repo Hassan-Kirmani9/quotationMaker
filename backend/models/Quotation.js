@@ -66,8 +66,8 @@ const quotationSchema = new mongoose.Schema({
   },
   discountType: {
     type: String,
-    enum: ['percentage', 'fixed'],
-    default: 0
+    enum: ['percentage'],
+    default: 'percentage'
   },
   discountValue: {
     type: Number,
@@ -98,18 +98,8 @@ const quotationSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired'],
-    default: 'draft'
-  },
-  notes: {
-    type: String,
-    trim: true,
-    maxlength: [1000, 'Notes cannot exceed 1000 characters']
-  },
-  terms: {
-    type: String,
-    trim: true,
-    maxlength: [2000, 'Terms cannot exceed 2000 characters']
+    enum: ['quotation', 'invoice'],
+    default: 'quotation'
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -144,13 +134,7 @@ quotationSchema.pre('save', function (next) {
 
   this.subtotal = this.items.reduce((sum, item) => sum + item.totalPrice, 0);
 
-
-  if (this.discountType === 'percentage') {
-    this.discountAmount = (this.subtotal * this.discountValue) / 100;
-  } else {
-    this.discountAmount = this.discountValue;
-  }
-
+  this.discountAmount = (this.subtotal * this.discountValue) / 100;
 
   const afterDiscount = this.subtotal - this.discountAmount;
   this.taxAmount = (afterDiscount * this.taxRate) / 100;

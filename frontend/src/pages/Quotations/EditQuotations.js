@@ -20,8 +20,7 @@ function EditQuotations() {
     discountValue: 0,
     taxRate: 0,
     currency: '',
-    notes: '',
-    terms: ''
+
   })
 
   const [quotationItems, setQuotationItems] = useState([
@@ -41,13 +40,13 @@ function EditQuotations() {
   const [clientsList, setClientsList] = useState([])
   const [productsList, setProductsList] = useState([])
 
-  // Calculated values
+  
   const [subtotal, setSubtotal] = useState(0)
   const [discountAmount, setDiscountAmount] = useState(0)
   const [taxAmount, setTaxAmount] = useState(0)
   const [totalAmount, setTotalAmount] = useState(0)
 
-  // Fetch quotation and dropdown data
+  
   useEffect(() => {
     const loadQuotationData = async () => {
       try {
@@ -66,7 +65,7 @@ function EditQuotations() {
 
         const quotation = quotationResponse.data.quotation
 
-        // Set form data
+        
         setFormData({
           client: quotation.client?._id || '',
           title: quotation.title || '',
@@ -75,11 +74,9 @@ function EditQuotations() {
           discountValue: quotation.discountValue || 0,
           taxRate: quotation.taxRate || 0,
           currency: quotation.currency || '',
-          notes: quotation.notes || '',
-          terms: quotation.terms || ''
         })
 
-        // Set quotation items
+        
         if (quotation.items && quotation.items.length > 0) {
           setQuotationItems(quotation.items.map(item => ({
             product: item.product?._id || item.product || '',
@@ -90,7 +87,7 @@ function EditQuotations() {
           })))
         }
 
-        // Set dropdown data
+        
         if (clientsResponse.success) {
           setClientsList(clientsResponse.data.clients || [])
         }
@@ -112,15 +109,12 @@ function EditQuotations() {
     }
   }, [id])
 
-  // Calculate totals whenever items or discounts change
+  
   useEffect(() => {
     const newSubtotal = quotationItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0)
     setSubtotal(newSubtotal)
 
-    const newDiscountAmount = formData.discountType === 'percentage' 
-      ? (newSubtotal * formData.discountValue) / 100
-      : formData.discountValue
-
+    const newDiscountAmount = (newSubtotal * formData.discountValue) / 100
     setDiscountAmount(newDiscountAmount)
 
     const afterDiscount = newSubtotal - newDiscountAmount
@@ -150,12 +144,12 @@ function EditQuotations() {
     }
   }
 
-  // Handle item changes
+  
   const handleItemChange = (index, field, value) => {
     const items = [...quotationItems]
     items[index][field] = value
 
-    // If product is selected, auto-fill price and description
+    
     if (field === 'product' && value) {
       const selectedProduct = productsList.find(p => p._id === value)
       if (selectedProduct) {
@@ -164,7 +158,7 @@ function EditQuotations() {
       }
     }
 
-    // Calculate total price for this item
+    
     if (field === 'quantity' || field === 'unitPrice' || field === 'product') {
       const quantity = parseFloat(items[index].quantity) || 0
       const unitPrice = parseFloat(items[index].unitPrice) || 0
@@ -202,7 +196,7 @@ function EditQuotations() {
       newErrors.title = 'Title is required'
     }
 
-    // Validate items
+    
     quotationItems.forEach((item, index) => {
       if (!item.product) {
         newErrors[`item_${index}_product`] = 'Product is required'
@@ -294,7 +288,7 @@ function EditQuotations() {
             </div>
           )}
 
-          {/* Basic Info */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Label>
               <span>Client *</span>
@@ -320,14 +314,12 @@ function EditQuotations() {
               <span>Currency</span>
               <Input
                 className="mt-1"
-                name="currency"
-                value={formData.currency || "Will use default currency from configuration"}
-                onChange={handleInputChange}
-                placeholder="Currency"
+                value={`${currency} - Will use default currency from configuration`}
+                readOnly
+                disabled
               />
               <HelperText>Currency is set in Configuration settings</HelperText>
             </Label>
-
             <Label className="md:col-span-2">
               <span>Title *</span>
               <Input
@@ -357,7 +349,7 @@ function EditQuotations() {
             </Label>
           </div>
 
-          {/* Quotation Items */}
+          {}
           <SectionTitle>Quotation Items</SectionTitle>
           <div className="mb-6">
             {quotationItems.map((item, index) => (
@@ -453,50 +445,46 @@ function EditQuotations() {
             </Button>
           </div>
 
-          {/* Pricing Summary */}
+          {}
           <SectionTitle>Pricing Details</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Label>
               <span>Subtotal</span>
-              <Input 
-                value={subtotal.toFixed(2)} 
+              <Input
+                value={subtotal.toFixed(2)}
                 className="mt-1"
                 type="number"
                 readOnly
               />
             </Label>
-
             <Label>
-              <span>Discount Type</span>
-              <Select
-                name="discountType"
-                value={formData.discountType}
-                onChange={handleInputChange}
-                className="mt-1"
-              >
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed Amount</option>
-              </Select>
-            </Label>
-
-            <Label>
-              <span>Discount Value</span>
-              <Input
-                name="discountValue"
-                value={formData.discountValue}
-                onChange={handleInputChange}
-                className="mt-1"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder={formData.discountType === 'percentage' ? '0%' : '0.00'}
-              />
+              <span>Discount Value (%)</span>
+              <div className="relative mt-1">
+                <Input
+                  name="discountValue"
+                  value={formData.discountValue}
+                  onChange={handleInputChange}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  style={{
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'textfield'
+                  }}
+                  className="pr-8"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">%</span>
+                </div>
+              </div>
             </Label>
 
             <Label>
               <span>Discount Amount</span>
-              <Input 
-                value={discountAmount.toFixed(2)} 
+              <Input
+                value={discountAmount.toFixed(2)}
                 className="mt-1"
                 type="number"
                 readOnly
@@ -519,8 +507,8 @@ function EditQuotations() {
 
             <Label>
               <span>Tax Amount</span>
-              <Input 
-                value={taxAmount.toFixed(2)} 
+              <Input
+                value={taxAmount.toFixed(2)}
                 className="mt-1"
                 type="number"
                 readOnly
@@ -529,38 +517,11 @@ function EditQuotations() {
 
             <Label className="md:col-span-2">
               <span className="text-lg font-semibold">Total Amount</span>
-              <Input 
-                value={totalAmount.toFixed(2)} 
+              <Input
+                value={totalAmount.toFixed(2)}
                 className="mt-1 text-lg font-semibold"
                 type="number"
                 readOnly
-              />
-            </Label>
-          </div>
-
-          {/* Additional Info */}
-          <div className="grid grid-cols-1 gap-4 mb-6">
-            <Label>
-              <span>Terms & Conditions</span>
-              <Textarea
-                className="mt-1"
-                name="terms"
-                value={formData.terms}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Enter terms and conditions"
-              />
-            </Label>
-
-            <Label>
-              <span>Notes</span>
-              <Textarea
-                className="mt-1"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="2"
-                placeholder="Enter any additional notes"
               />
             </Label>
           </div>

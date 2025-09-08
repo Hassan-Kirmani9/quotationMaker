@@ -34,13 +34,7 @@ function ViewQuotations() {
     const [quotation, setQuotation] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [showStatusModal, setShowStatusModal] = useState(false)
-    const [statusForm, setStatusForm] = useState({
-        status: ''
-    })
-
-    const statusOptions = ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired']
-
+    const [pdfLoading, setPdfLoading] = useState(false)
     const fetchQuotation = async () => {
         try {
             setLoading(true)
@@ -62,44 +56,20 @@ function ViewQuotations() {
 
     const getStatusBadgeType = (status) => {
         switch (status) {
-            case 'accepted': return 'success'
-            case 'sent': return 'primary'
-            case 'viewed': return 'primary'
-            case 'draft': return 'neutral'
-            case 'rejected': return 'danger'
-            case 'expired': return 'warning'
-            default: return 'neutral'
+            case 'invoice': return 'success'
+            case 'quotation': return 'primary'
+            default: return 'primary'
         }
     }
-
-    const handleOpenStatusModal = () => {
-        setStatusForm({ status: quotation.status })
-        setShowStatusModal(true)
-    }
-
-    const handleCloseStatusModal = () => {
-        setShowStatusModal(false)
-        setStatusForm({ status: '' })
-    }
-
-    const handleStatusChange = (e) => {
-        const { name, value } = e.target
-        setStatusForm(prev => ({ ...prev, [name]: value }))
-    }
-
-    const handleUpdateStatus = async () => {
-        if (!statusForm.status) {
-            toast.error("Status is required.")
-            return
-        }
+    const handleToggleStatus = async () => {
+        const newStatus = quotation.status === 'quotation' ? 'invoice' : 'quotation'
 
         try {
-            const response = await put(`/quotations/${id}/status`, { status: statusForm.status })
+            const response = await put(`/quotations/${id}/status`, { status: newStatus })
 
             if (response.success) {
-                toast.success("Status updated successfully!")
+                toast.success(`Converted to ${newStatus} successfully!`)
                 fetchQuotation()
-                handleCloseStatusModal()
             } else {
                 toast.error(response.message || "Failed to update status")
             }
@@ -109,24 +79,37 @@ function ViewQuotations() {
         }
     }
 
-    const handleDuplicateQuotation = async () => {
-        if (window.confirm('Are you sure you want to duplicate this quotation?')) {
-            try {
-                const response = await post(`/quotations/${id}/duplicate`)
-
-                if (response.success) {
-                    toast.success("Quotation duplicated successfully!")
-                    history.push('/app/quotations')
-                } else {
-                    toast.error(response.message || "Failed to duplicate quotation")
+    const handleDownloadPDF = async () => {
+        try {
+            setPdfLoading(true)
+            const response = await fetch(`https://quotationmaker.onrender.com/api/quotations/${id}/pdf`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
-            } catch (error) {
-                console.error("Error duplicating quotation:", error)
-                toast.error(error?.response?.data?.message || "Failed to duplicate quotation")
+            })
+
+            if (response.ok) {
+                const blob = await response.blob()
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${quotation.status}-${quotation.quotationNo}.pdf`
+                document.body.appendChild(a)
+                a.click()
+                window.URL.revokeObjectURL(url)
+                document.body.removeChild(a)
+                toast.success('PDF downloaded successfully!')
+            } else {
+                toast.error('Failed to download PDF')
             }
+        } catch (error) {
+            console.error('Error downloading PDF:', error)
+            toast.error('Failed to download PDF')
+        } finally {
+            setPdfLoading(false)
         }
     }
-
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A'
@@ -449,25 +432,91 @@ function ViewQuotations() {
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                 Actions
                             </h3>
+                            <div className="space-y-4">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Status                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {quotation.status === 'quotation' ? 'Click to convert to Invoice' : 'Click to convert to Quotation'}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            <div className="space-y-3">
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: quotation.status === 'quotation' ? '#3B82F6' : '#9CA3AF'
+                                        }}>
+                                            Quotation
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleToggleStatus}
+                                            style={{
+                                                position: 'relative',
+                                                display: 'inline-block',
+                                                width: '44px',
+                                                height: '24px',
+                                                backgroundColor: quotation.status === 'invoice' ? '#3B82F6' : '#E5E7EB',
+                                                borderRadius: '12px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                transition: 'background-color 0.2s ease',
+                                                outline: 'none'
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '2px',
+                                                    left: quotation.status === 'invoice' ? '22px' : '2px',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    backgroundColor: 'white',
+                                                    borderRadius: '50%',
+                                                    transition: 'left 0.2s ease',
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                }}
+                                            />
+                                        </button>
+
+                                        <span style={{
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: quotation.status === 'invoice' ? '#3B82F6' : '#9CA3AF'
+                                        }}>
+                                            Invoice
+                                        </span>
+                                    </div>
+                                    <div className="mt-3 text-center">
+                                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            Currently: {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                                        </span>
+                                    </div>
+                                </div>
                                 <Button
+                                    block
                                     style={{ backgroundColor: "#AA1A21" }}
-                                    className="text-white w-full"
-                                    onClick={handleOpenStatusModal}
+                                    className="text-white"
+                                    onClick={handleDownloadPDF}
+                                    disabled={pdfLoading}
                                 >
-                                    Update Status
+                                    {pdfLoading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Generating PDF...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <IoPrint className="w-4 h-4 mr-2" />
+                                            Download PDF
+                                        </>
+                                    )}
                                 </Button>
-
-                                <Button
-                                    style={{ backgroundColor: "#4CAF50" }}
-                                    className="text-white w-full"
-                                    onClick={handleDuplicateQuotation}
-                                >
-                                    <IoCopy className="w-4 h-4 mr-2" />
-                                    Duplicate Quotation
-                                </Button>
-
                                 <Button
                                     block
                                     layout="outline"
@@ -481,36 +530,6 @@ function ViewQuotations() {
                     </Card>
                 </div>
             </div>
-
-            {/* Status Update Modal */}
-            <Modal isOpen={showStatusModal} onClose={handleCloseStatusModal}>
-                <ModalHeader>Update Quotation Status</ModalHeader>
-                <ModalBody>
-                    <Label>
-                        <span>Status</span>
-                        <Select
-                            name="status"
-                            value={statusForm.status}
-                            onChange={handleStatusChange}
-                            className="mt-1"
-                        >
-                            {statusOptions.map((status) => (
-                                <option key={status} value={status}>
-                                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                                </option>
-                            ))}
-                        </Select>
-                    </Label>
-                </ModalBody>
-                <ModalFooter>
-                    <Button layout="outline" onClick={handleCloseStatusModal}>
-                        Cancel
-                    </Button>
-                    <Button onClick={handleUpdateStatus}>
-                        Update Status
-                    </Button>
-                </ModalFooter>
-            </Modal>
         </>
     )
 }

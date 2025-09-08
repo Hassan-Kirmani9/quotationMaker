@@ -237,7 +237,6 @@ function Quotations() {
                                         <TableCell>Title</TableCell>
                                         <TableCell>Client</TableCell>
                                         <TableCell>Date</TableCell>
-                                        <TableCell>Valid Until</TableCell>
                                         <TableCell>Total Amount</TableCell>
                                         <TableCell>Actions</TableCell>
                                     </tr>
@@ -271,11 +270,7 @@ function Quotations() {
                                                     {new Date(quotation.date).toLocaleDateString()}
                                                 </span>
                                             </TableCell>
-                                            <TableCell>
-                                                <span className={`text-sm ${new Date(quotation.validUntil) < new Date() ? 'text-red-600' : ''}`}>
-                                                    {new Date(quotation.validUntil).toLocaleDateString()}
-                                                </span>
-                                            </TableCell>
+                                         
                                             <TableCell>
                                                 <span className="text-sm font-semibold">
                                                     {formatCurrency(quotation.totalAmount, quotation.currency || 'USD')}

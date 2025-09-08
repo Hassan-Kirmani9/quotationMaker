@@ -13,8 +13,8 @@ function Configuration() {
     bankName: '',
     accountName: '',
     accountNumber: '',
-    routingNumber: '',
     businessName: '',
+    businessNameColor: '#333333',
     address: '',
     mobileNum: '',
     businessNum: '',
@@ -24,9 +24,8 @@ function Configuration() {
     taxId: '',
     validity: 30,
     terms: '',
-    notes: '',
-    prefix: 'QUO',
-    currency: 'USD'
+    quotationPrefix: 'QUO',
+    invoicePrefix: 'INV', currency: 'USD'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,8 +34,9 @@ function Configuration() {
   const [logoPreview, setLogoPreview] = useState('');
   const getImageUrl = (logoPath) => {
     if (!logoPath) return '';
-    if (logoPath.startsWith('http')) return logoPath; // Already full URL
-    return `http://localhost:5000${logoPath}`; // Add backend URL
+    if (logoPath.startsWith('data:image/')) return logoPath;
+    if (logoPath.startsWith('http')) return logoPath; 
+    return `http://localhost:5000${logoPath}`; 
   };
   const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -63,9 +63,8 @@ function Configuration() {
             bankName: c.bank?.name || '',
             accountName: c.bank?.accountName || '',
             accountNumber: c.bank?.accountNumber || '',
-            routingNumber: c.bank?.routingNumber || '',
             businessName: c.business?.name || '',
-            address: c.business?.address || '',
+            businessNameColor: c.business?.nameColor || '#333333', address: c.business?.address || '',
             mobileNum: c.business?.mobileNum || '',
             businessNum: c.business?.businessNum || '',
             email: c.business?.email || '',
@@ -73,11 +72,10 @@ function Configuration() {
             taxId: c.business?.taxId || '',
             validity: c.quotation?.validity || 30,
             terms: c.quotation?.terms || '',
-            notes: c.quotation?.notes || '',
-            prefix: c.quotation?.prefix || 'QUO',
-            currency: c.quotation?.currency || c.business?.currency
+            quotationPrefix: c.quotation?.quotationPrefix || 'QUO',
+            invoicePrefix: c.quotation?.invoicePrefix || 'INV', currency: c.quotation?.currency || c.business?.currency
           });
-          setLogoPreview(c.business?.logo ? `http://localhost:5000${c.business.logo}` : '');
+          setLogoPreview(c.business?.logo || '');
         }
       } catch (err) {
         console.error(err);
@@ -99,7 +97,7 @@ function Configuration() {
   const handleLogoUpload = e => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) { 
         setError('Logo file size should be less than 5MB');
         return;
       }
@@ -124,14 +122,16 @@ function Configuration() {
     setError('');
     try {
       let logoUrl = logoPreview;
-
-      // If there's a new logo file, upload it first
       if (logoFile) {
-        const formData = new FormData();
-        formData.append('logo', logoFile);
-
         try {
-          const uploadData = await uploadFile('/configuration/upload-logo', formData);
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(logoFile);
+          });
+
+          const uploadData = await put('/configuration/upload-logo', { logoBase64: base64 });
 
           if (uploadData.success) {
             logoUrl = uploadData.logoUrl;
@@ -148,10 +148,10 @@ function Configuration() {
           name: form.bankName,
           accountName: form.accountName,
           accountNumber: form.accountNumber,
-          routingNumber: form.routingNumber
         },
         business: {
           name: form.businessName,
+          nameColor: form.businessNameColor,
           address: form.address,
           mobileNum: form.mobileNum,
           businessNum: form.businessNum,
@@ -164,9 +164,8 @@ function Configuration() {
         quotation: {
           validity: Number(form.validity),
           terms: form.terms,
-          notes: form.notes,
-          prefix: form.prefix,
-          currency: form.currency
+          quotationPrefix: form.quotationPrefix,
+          invoicePrefix: form.invoicePrefix, currency: form.currency
         }
       };
 
@@ -193,9 +192,6 @@ function Configuration() {
     <>
       <div className="flex justify-between items-center mb-6">
         <PageTitle>Configuration</PageTitle>
-        <Button onClick={() => history.push('/app/quotations')}>
-          Quotations
-        </Button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -214,10 +210,7 @@ function Configuration() {
             <span>Account Number</span>
             <Input name="accountNumber" value={form.accountNumber} onChange={handleChange} />
           </Label>
-          <Label>
-            <span>Routing Number</span>
-            <Input name="routingNumber" value={form.routingNumber} onChange={handleChange} />
-          </Label>
+
         </div>
 
         {/* Business Info Section */}
@@ -226,6 +219,17 @@ function Configuration() {
           <Label>
             <span>Business Name</span>
             <Input name="businessName" value={form.businessName} onChange={handleChange} />
+          </Label>
+          <Label>
+            <span>Business Name Color</span>
+            <input
+              type="color"
+              name="businessNameColor"
+              value={form.businessNameColor}
+              onChange={handleChange}
+              className="mt-1 block w-full h-10 border border-gray-300 rounded-md cursor-pointer"
+            />
+            <HelperText>Choose color for business name in documents</HelperText>
           </Label>
           <Label>
             <span>Business Address</span>
@@ -325,8 +329,13 @@ function Configuration() {
           </Label>
           <Label>
             <span>Quotation Prefix</span>
-            <Input name="prefix" value={form.prefix} onChange={handleChange} />
+            <Input name="quotationPrefix" value={form.quotationPrefix} onChange={handleChange} />
             <HelperText>Prefix for quotation numbers (e.g., QUO-202409-0001)</HelperText>
+          </Label>
+          <Label>
+            <span>Invoice Prefix</span>
+            <Input name="invoicePrefix" value={form.invoicePrefix} onChange={handleChange} />
+            <HelperText>Prefix for invoice numbers (e.g., INV-202409-0001)</HelperText>
           </Label>
           <Label className="md:col-span-2">
             <span>Terms & Conditions</span>
@@ -334,20 +343,9 @@ function Configuration() {
               name="terms"
               value={form.terms}
               onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="mt-1 block w-full pt-2 pl-2 border-2 border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               rows="4"
               placeholder="Enter default terms and conditions for quotations..."
-            />
-          </Label>
-          <Label className="md:col-span-2">
-            <span>Default Notes</span>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              rows="3"
-              placeholder="Enter default notes for quotations..."
             />
           </Label>
         </div>

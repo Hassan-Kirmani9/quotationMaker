@@ -3,7 +3,6 @@ const router = express.Router();
 const quotationController = require('../controllers/quotationController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Apply authentication middleware to all routes
 router.use(authMiddleware);
 
 // Routes
@@ -15,5 +14,6 @@ router.put('/:id', quotationController.updateQuotation);
 router.put('/:id/status', quotationController.updateQuotationStatus);
 router.post('/:id/duplicate', quotationController.duplicateQuotation);
 router.delete('/:id', quotationController.deleteQuotation);
+router.get('/:id/pdf', quotationController.generateQuotationPDF);
 
 module.exports = router;

@@ -77,7 +77,6 @@ const getQuotation = async (req, res) => {
         message: 'Quotation not found'
       });
     }
-
     res.json({
       success: true,
       data: { quotation }
@@ -95,7 +94,7 @@ const getQuotation = async (req, res) => {
 
 const createQuotation = async (req, res) => {
   try {
-    const { client, title, description, items, discountType, discountValue, taxRate, currency, notes, terms } = req.body;
+    const { client, title, description, items, discountType, discountValue, taxRate, currency } = req.body;
 
 
     const clientExists = await Client.findOne({ _id: client, user: req.user._id });
@@ -139,12 +138,10 @@ const createQuotation = async (req, res) => {
       description,
       items: processedItems,
       validUntil,
-      discountType: discountType || 'percentage',
+      discountType: 'percentage',
       discountValue: discountValue || 0,
       taxRate: taxRate || 0,
-      currency: currency || 'USD',
-      notes,
-      terms,
+      currency: currency || defaultCurrency,
       user: req.user._id
     };
 
@@ -190,15 +187,6 @@ const updateQuotation = async (req, res) => {
       });
     }
 
-
-    if (quotation.status === 'accepted' || quotation.status === 'expired') {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot update accepted or expired quotations'
-      });
-    }
-
-
     if (items) {
       const processedItems = [];
       for (const item of items) {
@@ -224,8 +212,7 @@ const updateQuotation = async (req, res) => {
 
     Object.assign(quotation, otherUpdates);
 
-    if (discountType !== undefined) quotation.discountType = discountType;
-    if (discountValue !== undefined) quotation.discountValue = discountValue;
+    quotation.discountType = 'percentage'; if (discountValue !== undefined) quotation.discountValue = discountValue;
     if (taxRate !== undefined) quotation.taxRate = taxRate;
 
     await quotation.save();
@@ -267,10 +254,10 @@ const deleteQuotation = async (req, res) => {
     }
 
 
-    if (quotation.status === 'accepted') {
+    if (quotation.status === 'invoice') {
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete accepted quotations'
+        message: 'Cannot delete invoices. Convert back to quotation first.'
       });
     }
 
@@ -290,16 +277,15 @@ const deleteQuotation = async (req, res) => {
   }
 };
 
-
 const updateQuotationStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const allowedStatuses = ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired'];
+    const allowedStatuses = ['quotation', 'invoice'];
 
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status'
+        message: 'Invalid status. Must be either "quotation" or "invoice"'
       });
     }
 
@@ -320,7 +306,7 @@ const updateQuotationStatus = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Quotation status updated successfully',
+      message: `Successfully converted to ${status}`,
       data: { quotation }
     });
   } catch (error) {
@@ -356,7 +342,7 @@ const duplicateQuotation = async (req, res) => {
     delete quotationData.updatedAt;
 
 
-    quotationData.status = 'draft';
+    quotationData.status = 'quotation';
     quotationData.date = new Date();
 
 
@@ -446,6 +432,262 @@ const getQuotationStats = async (req, res) => {
   }
 };
 
+const generateQuotationPDF = async (req, res) => {
+  try {
+    const quotation = await Quotation.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    })
+      .populate('client')
+      .populate('items.product', 'name description unit');
+
+    if (!quotation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quotation not found'
+      });
+    }
+
+    
+    const configuration = await Configuration.findOne({ user: req.user._id });
+
+    
+    const subtotal = quotation.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+    const discountValue = quotation.discountValue || 0;
+    const taxRate = quotation.taxRate || 0;
+    const discountAmount = quotation.discountType === 'percentage'
+      ? (subtotal * discountValue) / 100
+      : discountValue;
+    const afterDiscount = subtotal - discountAmount;
+    const taxAmount = (afterDiscount * taxRate) / 100;
+    const totalAmount = afterDiscount + taxAmount;
+
+    
+    const formatCurrency = (amount) => {
+      const currencySymbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'PKR': 'PKR',
+        'AED': 'د.إ',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'JPY': '¥',
+        'INR': '₹',
+        'CHF': 'Fr',
+        'SAR': '﷼'
+      };
+
+      const currency = quotation.currency || 'PKR';
+      const symbol = currencySymbols[currency] || currency;
+      const numAmount = parseFloat(amount) || 0;
+
+      return `${symbol} ${numAmount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    };
+
+    
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    };
+
+    
+    const htmlTemplate = `
+   <!DOCTYPE html>
+   <html>
+   <head>
+       <meta charset="UTF-8">
+       <style>
+        body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    padding: 20px 20px 80px 20px; 
+    color: #333; 
+}
+.footer-section { 
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    padding-top: 20px; 
+    border-top: 1px solid #ddd;
+    background: white;
+}  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+.business-name { flex: 1; display: flex; align-items: center; justify-content: center; margin-top:10px;}   
+.logo { max-width: 120px; max-height: 80px; }
+           .document-title { font-size: 28px; font-weight: bold; color: #333; text-align: right; }
+           .company-info { margin-bottom: 30px; }
+           .billing-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+           .bill-to { width: 45%; }
+           .document-details { width: 45%; text-align: right; }      
+           .bill-to h3, .document-details h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; }
+           .bill-to p, .document-details p { margin: 2px 0; font-size: 14px; }
+           .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+           .items-table th { background-color: #f5f5f5; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: bold; }
+           .items-table td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+           .items-table .text-right { text-align: right; }
+           .items-table .text-center { text-align: center; }
+           .totals-section { margin-top: 30px; display: flex; justify-content: flex-end; }
+           .totals-table { width: 300px; }
+           .totals-table tr td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+           .totals-table .total-row { font-weight: bold; font-size: 16px; border-top: 2px solid #333; }
+           .additional-sections { margin-top: 30px; margin-bottom: 20px; }
+           .bank-details { margin-bottom: 20px; }
+           .bank-details h4 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; }
+           .terms-section { margin-top: 20px; }
+           .terms-section h4 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; }
+           .terms-section p { font-size: 12px; line-height: 1.4; }
+           .contact-footer { text-align: center; font-size: 12px; color: #666; }
+       </style>
+   </head>
+   <body>
+<div class="header">
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+    <div style="display: flex; align-items: center; gap: 50px;">
+      ${configuration && configuration.business && configuration.business.logo ? `<img src="${configuration.business.logo}" class="logo" alt="Company Logo">` : ''}
+<div style="font-size: 32px; font-weight: bold; color: ${configuration && configuration.business && configuration.business.nameColor ? configuration.business.nameColor : '#333'}; margin-left: 40px;">        ${configuration && configuration.business && configuration.business.name ? configuration.business.name : ''}
+      </div>
+    </div>
+    <div style="font-size: 32px; font-weight: bold; color: #333;">
+      ${quotation.status.toUpperCase()}
+    </div>
+  </div>
+</div>
+
+       <div class="billing-section">
+        <div class="bill-to">
+  <p><strong>Bill To:</strong> <span style="color: ${configuration && configuration.business && configuration.business.businessNameColor ? configuration.business.businessNameColor : '#000000'}">${quotation.client && quotation.client.name ? quotation.client.name : 'N/A'}</span></p>
+  <p><strong>Address:</strong> ${quotation.client && quotation.client.address ? quotation.client.address : ''} ${quotation.client && quotation.client.city ? quotation.client.city : ''}, ${quotation.client && quotation.client.country ? quotation.client.country : ''}</p>
+</div>
+           
+           <div class="document-details">
+               <p><strong>${quotation.status === 'invoice' ? 'Invoice' : 'Quotation'} #:</strong> ${quotation.quotationNo}</p>
+               <p><strong>Date:</strong> ${formatDate(quotation.date)}</p>
+               ${quotation.validUntil ? `<p><strong>Due Date:</strong> ${formatDate(quotation.validUntil)}</p>` : ''}
+           </div>
+       </div>
+
+     <table class="items-table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-right">Unit Price</th>
+            <th class="text-right">Total Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        ${quotation.items.map(item => `
+            <tr>
+                <td>${(item.product && item.product.name) || item.description || 'N/A'}</td>
+                <td class="text-center">${item.quantity || 1}</td>
+                <td class="text-right">${item.unitPrice || 0}</td>
+                <td class="text-right">${item.totalPrice || 0}</td>
+            </tr>
+        `).join('')}
+    </tbody>
+</table>
+
+       <div class="totals-section">
+           <table class="totals-table">
+               <tr>
+                   <td><strong>Gross Amount:</strong></td>
+                   <td class="text-right">${formatCurrency(subtotal)}</td>
+               </tr>
+          <tr>
+    <td><strong>Discount:</strong></td>
+    <td class="text-right">${formatCurrency(discountAmount)}</td>
+</tr>
+<tr>
+    <td><strong>Tax:</strong></td>
+    <td class="text-right">${formatCurrency(taxAmount)}</td>
+</tr>
+               <tr class="total-row">
+                   <td><strong>Net Amount:</strong></td>
+                   <td class="text-right">${formatCurrency(totalAmount)}</td>
+               </tr>
+           </table>
+       </div>
+
+       <div class="additional-sections">
+<p><em>All rates are stated in ${quotation.currency || (configuration?.quotation?.currency || 'PKR')}</em></p>       
+${configuration && configuration.bank && configuration.bank.name && quotation.status === 'invoice' ? `
+<div class="bank-details">
+    <h4>Money transfer to the account below:</h4>
+    <p><strong>Bank Name:</strong> ${configuration.bank.name}</p>
+    <p><strong>Account Title:</strong> ${configuration.bank.accountName || ''}</p>
+    <p><strong>Account No:</strong> ${configuration.bank.accountNumber || ''}</p>
+    <p><strong>Reference:</strong> ${quotation.quotationNo}</p>
+</div>
+` : ''}
+    ${configuration && configuration.quotation && configuration.quotation.terms ? `
+<div class="terms-section">
+    <h4>Terms & Conditions:</h4>
+    <p>${configuration.quotation.terms}</p>
+</div>
+` : ''}
+       </div>
+
+       <div class="footer-section">
+           <div class="contact-footer">
+           <p>
+    ${configuration && configuration.business && configuration.business.mobileNum ? configuration.business.mobileNum : ''} | 
+    ${configuration && configuration.business && configuration.business.email ? configuration.business.email : ''} | 
+    ${configuration && configuration.business && configuration.business.web ? configuration.business.web : ''} | 
+    </p>
+   <p> ${configuration && configuration.business && configuration.business.address ? configuration.business.address : ''}</p>
+   <em><a href="https:
+           </div>
+       </div>
+   </body>
+   </html>
+   `;
+
+    
+    const puppeteer = require('puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+
+    await page.setContent(htmlTemplate, { waitUntil: 'networkidle0' });
+
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    });
+
+    await browser.close();
+
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${quotation.status}-${quotation.quotationNo}.pdf"`);
+
+    res.send(pdf);
+
+  } catch (error) {
+    console.error('Generate PDF error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating PDF',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getQuotations,
   getQuotation,
@@ -454,5 +696,6 @@ module.exports = {
   deleteQuotation,
   updateQuotationStatus,
   duplicateQuotation,
-  getQuotationStats
+  getQuotationStats,
+  generateQuotationPDF
 };
