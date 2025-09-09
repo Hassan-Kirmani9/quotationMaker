@@ -19,7 +19,8 @@ import {
     ModalFooter,
     Input,
     Label,
-    HelperText
+    HelperText,
+    Select
 } from '@windmill/react-ui'
 import { EditIcon, TrashIcon } from '../../icons'
 import { useCurrency } from '../../context/CurrencyContext'
@@ -29,7 +30,8 @@ import {
     IoPricetag,
     IoPricetagsOutline,
     IoPencil,
-    IoTrash
+    IoTrash,
+    IoResize
 } from 'react-icons/io5'
 
 function Products() {
@@ -47,6 +49,8 @@ function Products() {
 
     const [searchTerm, setSearchTerm] = useState('')
 
+    const [sizes, setSizes] = useState([])
+    const [loadingSizes, setLoadingSizes] = useState(false)
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
@@ -54,12 +58,26 @@ function Products() {
         name: '',
         description: '',
         sellingPrice: 0,
-        purchasePrice: 0
+        purchasePrice: 0,
+        size: ''
     })
     const [editLoading, setEditLoading] = useState(false)
     const [editErrors, setEditErrors] = useState({})
     const [editApiError, setEditApiError] = useState('')
 
+    const fetchSizes = async () => {
+        try {
+            setLoadingSizes(true)
+            const response = await get('/sizes/all')
+            if (response.success) {
+                setSizes(response.data.sizes)
+            }
+        } catch (error) {
+            console.error('Error fetching sizes:', error)
+        } finally {
+            setLoadingSizes(false)
+        }
+    }
 
     const fetchProducts = async (page = 1, search = '') => {
         try {
@@ -89,7 +107,6 @@ function Products() {
             setLoading(false)
         }
     }
-
 
     const handleSearch = (e) => {
         const value = e.target.value
@@ -127,11 +144,16 @@ function Products() {
             name: product.name,
             description: product.description || '',
             sellingPrice: product.sellingPrice,
-            purchasePrice: product.purchasePrice
+            purchasePrice: product.purchasePrice,
+            size: product.size._id || product.size
         })
         setEditErrors({})
         setEditApiError('')
         setIsModalOpen(true)
+        
+        if (sizes.length === 0) {
+            fetchSizes()
+        }
     }
 
     const handleEditInputChange = (e) => {
@@ -158,6 +180,10 @@ function Products() {
 
         if (!editFormData.name.trim()) {
             newErrors.name = 'Product name is required'
+        }
+
+        if (!editFormData.size) {
+            newErrors.size = 'Size is required'
         }
 
         if (!editFormData.sellingPrice || editFormData.sellingPrice < 0) {
@@ -214,7 +240,8 @@ function Products() {
             name: '',
             description: '',
             sellingPrice: 0,
-            purchasePrice: 0
+            purchasePrice: 0,
+            size: ''
         })
         setEditErrors({})
         setEditApiError('')
@@ -270,7 +297,7 @@ function Products() {
                 </Button>
             </div>
 
-            { }
+            {/* Search */}
             <div className="mb-4">
                 <Input
                     placeholder="Search products by name or description..."
@@ -306,13 +333,14 @@ function Products() {
                 </div>
             ) : (
                 <>
-                    { }
+                    {/* Desktop Table View */}
                     <div className="hidden md:block">
                         <TableContainer className="mb-8">
                             <Table>
                                 <TableHeader>
                                     <tr>
                                         <TableCell>Product Name</TableCell>
+                                        <TableCell>Size</TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell>Purchase Price</TableCell>
                                         <TableCell>Selling Price</TableCell>
@@ -328,6 +356,11 @@ function Products() {
                                                         <p className="font-semibold">{product.name}</p>
                                                     </div>
                                                 </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                    {product.size?.name || 'N/A'}
+                                                </span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-sm">{product.description || 'No description'}</span>
@@ -376,7 +409,7 @@ function Products() {
                         </TableContainer>
                     </div>
 
-                    { }
+                    {/* Mobile Card View */}
                     <div className="block md:hidden">
                         <div className="space-y-4 mb-8">
                             {dataTable.map((product) => (
@@ -384,7 +417,7 @@ function Products() {
                                     key={product._id}
                                     className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative"
                                 >
-                                    { }
+                                    {/* Header */}
                                     <div className="flex justify-between items-start mb-4">
                                         <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4">
                                             {product.name}
@@ -407,7 +440,15 @@ function Products() {
                                         </div>
                                     </div>
 
-                                    { }
+                                    {/* Size */}
+                                    <div className="flex items-center mb-3 text-gray-600">
+                                        <IoResize className="w-4 h-4 mr-2 flex-shrink-0" />
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            {product.size?.name || 'No size'}
+                                        </span>
+                                    </div>
+
+                                    {/* Description */}
                                     {product.description && (
                                         <div className="flex items-start mb-4 text-gray-600">
                                             <IoDocument className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
@@ -417,7 +458,7 @@ function Products() {
                                         </div>
                                     )}
 
-                                    { }
+                                    {/* Purchase Price */}
                                     <div className="flex items-center mb-3 text-gray-600">
                                         <IoPricetagsOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <div className="text-sm">
@@ -426,7 +467,7 @@ function Products() {
                                         </div>
                                     </div>
 
-                                    { }
+                                    {/* Selling Price */}
                                     <div className="flex items-center">
                                         <IoPricetag className="w-5 h-5 mr-3 text-purple-600" />
                                         <div>
@@ -440,7 +481,7 @@ function Products() {
                             ))}
                         </div>
 
-                        { }
+                        {/* Mobile Pagination */}
                         {totalPages > 1 && (
                             <div className="flex justify-center">
                                 <Pagination
@@ -455,7 +496,7 @@ function Products() {
                 </>
             )}
 
-            { }
+            {/* Edit Product Modal */}
             <Modal isOpen={isModalOpen} onClose={closeModal}>
                 <ModalHeader>Edit Product</ModalHeader>
                 <ModalBody className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
@@ -493,6 +534,32 @@ function Products() {
                                     rows="3"
                                     placeholder="Enter product description"
                                 />
+                            </Label>
+
+                            <Label>
+                                <span>Size *</span>
+                                {loadingSizes ? (
+                                    <div className="mt-1 p-2 text-gray-500">Loading sizes...</div>
+                                ) : (
+                                    <Select
+                                        className="mt-1"
+                                        name="size"
+                                        value={editFormData.size}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        valid={!editErrors.size}
+                                    >
+                                        <option value="">Select a size</option>
+                                        {sizes.map((size) => (
+                                            <option key={size._id} value={size._id}>
+                                                {size.name}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
+                                {editErrors.size && (
+                                    <HelperText valid={false}>{editErrors.size}</HelperText>
+                                )}
                             </Label>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

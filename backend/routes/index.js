@@ -7,6 +7,7 @@ const clientRoutes = require('./clients');
 const productRoutes = require('./products');
 const configurationRoutes = require('./configuration');
 const quotationRoutes = require('./quotations');
+const sizeRoutes = require('./size');
 
 
 router.use('/auth', authRoutes);
@@ -14,6 +15,7 @@ router.use('/clients', clientRoutes);
 router.use('/products', productRoutes);
 router.use('/configuration', configurationRoutes);
 router.use('/quotations', quotationRoutes);
+router.use('/sizes', sizeRoutes);
 
 
 router.get('/', (req, res) => {
@@ -26,7 +28,8 @@ router.get('/', (req, res) => {
       clients: '/api/clients',
       products: '/api/products',
       configuration: '/api/configuration',
-      quotations: '/api/quotations'
+      quotations: '/api/quotations',
+      sizes: '/api/sizes'
     }
   });
 });

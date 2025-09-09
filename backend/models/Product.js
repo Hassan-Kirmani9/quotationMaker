@@ -22,6 +22,11 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Purchase price is required'],
     min: [0, 'Purchase price cannot be negative']
   },
+  size: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Size',
+    required: [true, 'Size is required']
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -31,8 +36,8 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-
 productSchema.index({ user: 1 });
+productSchema.index({ size: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 
 module.exports = mongoose.model('Product', productSchema);

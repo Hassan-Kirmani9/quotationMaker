@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useHistory } from 'react-router-dom'
-import { post } from '../../api/axios'
+import { post, get } from '../../api/axios'
 
 import PageTitle from '../../components/Typography/PageTitle'
 import SectionTitle from '../../components/Typography/SectionTitle'
-import { Input, Label, Button, HelperText } from '@windmill/react-ui'
+import { Input, Label, Button, HelperText, Select } from '@windmill/react-ui'
 
 function CreateProducts() {
   const history = useHistory()
@@ -13,12 +13,35 @@ function CreateProducts() {
     name: '',
     description: '',
     sellingPrice: 0,
-    purchasePrice: 0
+    purchasePrice: 0,
+    size: ''
   })
 
+  const [sizes, setSizes] = useState([])
+  const [loadingSizes, setLoadingSizes] = useState(true)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
+
+  useEffect(() => {
+    fetchSizes()
+  }, [])
+
+  const fetchSizes = async () => {
+    try {
+      setLoadingSizes(true)
+      const response = await get('/sizes/all')
+      if (response.success) {
+        setSizes(response.data.sizes)
+      } else {
+        console.error('Error fetching sizes:', response.message)
+      }
+    } catch (error) {
+      console.error('Error fetching sizes:', error)
+    } finally {
+      setLoadingSizes(false)
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -52,6 +75,10 @@ function CreateProducts() {
       newErrors.description = 'Description cannot exceed 1000 characters'
     }
 
+    if (!formData.size) {
+      newErrors.size = 'Size is required'
+    }
+
     if (!formData.sellingPrice || formData.sellingPrice < 0) {
       newErrors.sellingPrice = 'Selling price must be 0 or greater'
     }
@@ -79,7 +106,8 @@ function CreateProducts() {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
         sellingPrice: parseFloat(formData.sellingPrice),
-        purchasePrice: parseFloat(formData.purchasePrice)
+        purchasePrice: parseFloat(formData.purchasePrice),
+        size: formData.size
       }
 
       const response = await post("/products", cleanedData)
@@ -117,6 +145,10 @@ function CreateProducts() {
 
   const handleCancel = () => {
     history.push('/app/products')
+  }
+
+  const navigateToSizes = () => {
+    history.push('/app/sizes')
   }
 
   return (
@@ -177,6 +209,40 @@ function CreateProducts() {
               )}
             </Label>
 
+            <Label>
+              <div className="flex justify-between items-center">
+                <span>Size *</span>
+             
+              </div>
+              {loadingSizes ? (
+                <div className="mt-1 p-2 text-gray-500">Loading sizes...</div>
+              ) : (
+                <Select
+                  className="mt-1"
+                  name="size"
+                  value={formData.size}
+                  onChange={handleInputChange}
+                  required
+                  valid={!errors.size}
+                >
+                  <option value="">Select a size</option>
+                  {sizes.map((size) => (
+                    <option key={size._id} value={size._id}>
+                      {size.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {errors.size && (
+                <HelperText valid={false}>{errors.size}</HelperText>
+              )}
+              {!loadingSizes && sizes.length === 0 && (
+                <HelperText valid={false}>
+                  No sizes available. Please create sizes first.
+                </HelperText>
+              )}
+            </Label>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Label>
                 <span>Purchase Price *</span>
@@ -231,7 +297,7 @@ function CreateProducts() {
               type="submit"
               style={{ backgroundColor: "#AA1A21" }}
               className="text-white"
-              disabled={loading}
+              disabled={loading || loadingSizes}
             >
               {loading ? 'Creating...' : 'Create Product'}
             </Button>

@@ -18,6 +18,7 @@ const Configuration = lazy(() => import('../pages/Configurations/Configurations'
 const CreateConfiguration = lazy(() => import('../pages/Configurations/CreateConfigurations'))
 
 const Products = lazy(() => import('../pages/Products/Products'))
+const Size = lazy(() => import('../pages/Size/Size'))
 const EditProjects = lazy(() => import('../pages/Projects/EditProject'))
 
 const CreateProducts = lazy(() => import('../pages/Products/CreateProducts'))
@@ -61,6 +62,10 @@ const routes = [
   {
     path: '/quotations',
     component: Quotations,
+  },
+  {
+    path: '/sizes',
+    component: Size,
   },
   {
     path: '/quotations/create',

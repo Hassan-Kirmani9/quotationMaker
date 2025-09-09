@@ -31,9 +31,15 @@ const getQuotations = async (req, res) => {
 
     const quotations = await Quotation.find(query)
       .populate('client', 'name businessName email')
-      .populate('items.product', 'name')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
+      .populate('items.product', 'name size')
+      .populate({
+        path: 'items.product',
+        select: 'name size',
+        populate: {
+          path: 'size',
+          select: 'name'
+        }
+      }).limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
 
@@ -69,8 +75,14 @@ const getQuotation = async (req, res) => {
       user: req.user._id
     })
       .populate('client')
-      .populate('items.product', 'name description unit');
-
+      .populate({
+        path: 'items.product',
+        select: 'name description unit size',
+        populate: {
+          path: 'size',
+          select: 'name'
+        }
+      });
     if (!quotation) {
       return res.status(404).json({
         success: false,
@@ -115,13 +127,26 @@ const createQuotation = async (req, res) => {
           message: `Product not found: ${item.product}`
         });
       }
+      const quantity = item.quantity || 1;
+      const unitPrice = item.unitPrice || product.sellingPrice;
+      const discountValue = item.discountValue || 0;
+      const discountType = item.discountType || 'percentage';
+
+      const subtotalBeforeDiscount = quantity * unitPrice;
+      const itemDiscountAmount = discountType === 'percentage'
+        ? (subtotalBeforeDiscount * discountValue) / 100
+        : discountValue;
+      const totalPrice = subtotalBeforeDiscount - itemDiscountAmount;
 
       processedItems.push({
         product: item.product,
         description: item.description || product.description,
-        quantity: item.quantity || 1,
-        unitPrice: item.unitPrice || product.sellingPrice,
-        totalPrice: (item.quantity || 1) * (item.unitPrice || product.sellingPrice)
+        quantity: quantity,
+        unitPrice: unitPrice,
+        discountType: discountType,
+        discountValue: discountValue,
+        discountAmount: itemDiscountAmount,
+        totalPrice: totalPrice
       });
     }
 
@@ -151,7 +176,7 @@ const createQuotation = async (req, res) => {
 
     await quotation.populate([
       { path: 'client', select: 'name businessName email' },
-      { path: 'items.product', select: 'name description unit' }
+      { path: 'items.product', select: 'name description unit size', populate: { path: 'size', select: 'name' } }
     ]);
 
     res.status(201).json({
@@ -220,8 +245,7 @@ const updateQuotation = async (req, res) => {
 
     await quotation.populate([
       { path: 'client', select: 'name businessName email' },
-      { path: 'items.product', select: 'name description unit' }
-    ]);
+      { path: 'items.product', select: 'name description unit size', populate: { path: 'size', select: 'name' } }]);
 
     res.json({
       success: true,
@@ -358,8 +382,7 @@ const duplicateQuotation = async (req, res) => {
 
     await newQuotation.populate([
       { path: 'client', select: 'name businessName email' },
-      { path: 'items.product', select: 'name description unit' }
-    ]);
+      { path: 'items.product', select: 'name description unit size', populate: { path: 'size', select: 'name' } }]);
 
     res.status(201).json({
       success: true,
@@ -439,8 +462,14 @@ const generateQuotationPDF = async (req, res) => {
       user: req.user._id
     })
       .populate('client')
-      .populate('items.product', 'name description unit');
-
+      .populate({
+        path: 'items.product',
+        select: 'name description unit size',
+        populate: {
+          path: 'size',
+          select: 'name'
+        }
+      });
     if (!quotation) {
       return res.status(404).json({
         success: false,
@@ -449,7 +478,7 @@ const generateQuotationPDF = async (req, res) => {
     }
 
     const configuration = await Configuration.findOne({ user: req.user._id });
-    
+
     const subtotal = quotation.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
     const discountValue = quotation.discountValue || 0;
     const taxRate = quotation.taxRate || 0;
@@ -572,23 +601,25 @@ const generateQuotationPDF = async (req, res) => {
        </div>
 
      <table class="items-table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th class="text-center">Quantity</th>
-            <th class="text-right">Unit Price</th>
-            <th class="text-right">Total Price</th>
-        </tr>
-    </thead>
+  <thead>
+    <tr>
+        <th>Product</th>
+        <th class="text-center">Size</th>
+        <th class="text-center">Quantity</th>
+        <th class="text-right">Unit Price</th>
+        <th class="text-right">Total Price</th>
+    </tr>
+</thead>
     <tbody>
-        ${quotation.items.map(item => `
-            <tr>
-                <td>${(item.product && item.product.name) || item.description || 'N/A'}</td>
-                <td class="text-center">${item.quantity || 1}</td>
-                <td class="text-right">${item.unitPrice || 0}</td>
-                <td class="text-right">${item.totalPrice || 0}</td>
-            </tr>
-        `).join('')}
+  ${quotation.items.map(item => `
+    <tr>
+        <td>${(item.product && item.product.name) || item.description || 'N/A'}</td>
+        <td class="text-center">${(item.product && item.product.size && item.product.size.name) || 'N/A'}</td>
+        <td class="text-center">${item.quantity || 1}</td>
+        <td class="text-right">${item.unitPrice || 0}</td>
+        <td class="text-right">${item.totalPrice || 0}</td>
+    </tr>
+`).join('')}
     </tbody>
 </table>
 
@@ -598,8 +629,8 @@ const generateQuotationPDF = async (req, res) => {
                    <td><strong>Gross Amount:</strong></td>
                    <td class="text-right">${formatCurrency(subtotal)}</td>
                </tr>
-          <tr>
-    <td><strong>Discount:</strong></td>
+<tr>
+    <td><strong>Discount:</strong> ${discountValue > 0 ? `${discountValue}%` : ''}</td>
     <td class="text-right">${formatCurrency(discountAmount)}</td>
 </tr>
 <tr>
@@ -651,17 +682,7 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-extensions'
-      ]
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
 

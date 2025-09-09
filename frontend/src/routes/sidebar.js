@@ -27,6 +27,11 @@ const routes = [
     icon: 'ChartsIcon',
     name: 'Products',
   },
+  {
+    path: '/app/sizes',
+    icon: 'ButtonsIcon',
+    name: 'Sizes',
+  },
 
  {
     path: '/app/configuration',

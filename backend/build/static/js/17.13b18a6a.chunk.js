@@ -1,2 +1,0 @@
-(this["webpackJsonpquotation-maker"]=this["webpackJsonpquotation-maker"]||[]).push([[17],{217:function(t,e,n){"use strict";n.r(e);n(1);var r=n(51),a=n(3);e.default=function(){return Object(a.jsx)(a.Fragment,{children:Object(a.jsx)(r.a,{children:"Blank"})})}},51:function(t,e,n){"use strict";n(1);var r=n(3);e.a=function(t){let{children:e}=t;return Object(r.jsx)("h1",{className:"my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200",children:e})}}}]);
-//# sourceMappingURL=17.13b18a6a.chunk.js.map

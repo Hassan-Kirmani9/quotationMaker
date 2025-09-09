@@ -21,6 +21,12 @@ const quotationItemSchema = new mongoose.Schema({
     required: true,
     min: [0, 'Unit price cannot be negative']
   },
+  discountValue: {
+    type: Number,
+    min: [0, 'Discount cannot be negative'],
+    max: [100, 'Discount cannot exceed 100%'],
+    default: 0
+  },
   totalPrice: {
     type: Number,
     required: true,
@@ -95,7 +101,6 @@ const quotationSchema = new mongoose.Schema({
     min: [0, 'Total amount cannot be negative'],
     default: 0,
   },
-
   status: {
     type: String,
     enum: ['quotation', 'invoice'],
@@ -109,7 +114,6 @@ const quotationSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 
 quotationSchema.pre('save', async function (next) {
   if (this.isNew && !this.quotationNo) {
@@ -129,22 +133,23 @@ quotationSchema.pre('save', async function (next) {
   next();
 });
 
-
 quotationSchema.pre('save', function (next) {
+  // Calculate item-level totals first
+  this.items.forEach(item => {
+    const subtotalBeforeDiscount = item.quantity * item.unitPrice;
+    const itemDiscountAmount = (subtotalBeforeDiscount * item.discountValue) / 100;
+    item.totalPrice = subtotalBeforeDiscount - itemDiscountAmount;
+  });
 
+  // Calculate quotation-level totals
   this.subtotal = this.items.reduce((sum, item) => sum + item.totalPrice, 0);
-
   this.discountAmount = (this.subtotal * this.discountValue) / 100;
-
   const afterDiscount = this.subtotal - this.discountAmount;
   this.taxAmount = (afterDiscount * this.taxRate) / 100;
-
-
   this.totalAmount = afterDiscount + this.taxAmount;
 
   next();
 });
-
 
 quotationSchema.index({ user: 1 });
 quotationSchema.index({ client: 1 });

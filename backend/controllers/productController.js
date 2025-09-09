@@ -1,12 +1,10 @@
 const Product = require('../models/Product');
 
-
 const getProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
     const userId = req.user._id;
 
-    
     const query = { user: userId };
     
     if (search) {
@@ -16,8 +14,8 @@ const getProducts = async (req, res) => {
       ];
     }
 
-    
     const products = await Product.find(query)
+      .populate('size', 'name') 
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -47,13 +45,12 @@ const getProducts = async (req, res) => {
   }
 };
 
-
 const getProduct = async (req, res) => {
   try {
     const product = await Product.findOne({ 
       _id: req.params.id, 
       user: req.user._id 
-    });
+    }).populate('size', 'name');
 
     if (!product) {
       return res.status(404).json({
@@ -76,7 +73,6 @@ const getProduct = async (req, res) => {
   }
 };
 
-
 const createProduct = async (req, res) => {
   try {
     const productData = {
@@ -86,6 +82,9 @@ const createProduct = async (req, res) => {
 
     const product = new Product(productData);
     await product.save();
+
+    
+    await product.populate('size', 'name');
 
     res.status(201).json({
       success: true,
@@ -102,14 +101,13 @@ const createProduct = async (req, res) => {
   }
 };
 
-
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
       req.body,
       { new: true, runValidators: true }
-    );
+    ).populate('size', 'name');
 
     if (!product) {
       return res.status(404).json({
@@ -132,7 +130,6 @@ const updateProduct = async (req, res) => {
     });
   }
 };
-
 
 const deleteProduct = async (req, res) => {
   try {
