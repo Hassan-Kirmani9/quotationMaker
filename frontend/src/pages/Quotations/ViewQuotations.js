@@ -27,6 +27,7 @@ import {
 
 import toast from 'react-hot-toast';
 import { useCurrency } from '../../context/CurrencyContext'
+
 function ViewQuotations() {
     const history = useHistory()
     const { id } = useParams()
@@ -35,6 +36,7 @@ function ViewQuotations() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [pdfLoading, setPdfLoading] = useState(false)
+
     const fetchQuotation = async () => {
         try {
             setLoading(true)
@@ -61,6 +63,7 @@ function ViewQuotations() {
             default: return 'primary'
         }
     }
+
     const handleToggleStatus = async () => {
         const newStatus = quotation.status === 'quotation' ? 'invoice' : 'quotation'
 
@@ -82,7 +85,7 @@ function ViewQuotations() {
     const handleDownloadPDF = async () => {
         try {
             setPdfLoading(true)
-            const response = await fetch(`https://quotationmaker.onrender.com/api/quotations/${id}/pdf`, {
+            const response = await fetch(`https://backend-white-water-1093.fly.dev/api/quotations/${id}/pdf`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -208,43 +211,46 @@ function ViewQuotations() {
             <div className="flex justify-between items-center mb-6">
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-5">
                 <div className="lg:col-span-2 space-y-6 mb-5">
                     <Card>
                         <CardBody>
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                            <div className="mb-6">
+                                {/* Title Section */}
+                                <div className="mb-4">
+                                    <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1" style={{ wordBreak: 'break-words' }}>
                                         {quotation.title}
                                     </h2>
-                                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-400">
+                                    <p className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-400">
                                         Quotation #{quotation.quotationNo}
                                     </p>
                                 </div>
 
-                                <div>
-                                    <div>
-                                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {/* Date Section - Mobile Optimized */}
+                                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                                    <div className="flex-1">
+                                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Date
                                         </h4>
-                                        <p className="text-gray-800 dark:text-gray-200 font-medium">
+                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                                             {formatDate(quotation.date)}
                                         </p>
                                     </div>
                                     {quotation.validUntil && (
-                                        <div className="mt-4">
-                                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <div className="flex-1">
+                                            <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 Valid Until
                                             </h4>
-                                            <p className="text-gray-800 dark:text-gray-200 font-medium">
+                                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                                                 {formatDate(quotation.validUntil)}
                                             </p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <Badge type={getStatusBadgeType(quotation.status)} className="text-sm px-3 py-1">
+                                {/* Status and Edit Button */}
+                                <div className="flex items-center justify-between">
+                                    <Badge type={getStatusBadgeType(quotation.status)} className="text-xs px-2 py-1">
                                         {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
                                     </Badge>
 
@@ -253,8 +259,9 @@ function ViewQuotations() {
                                         size="icon"
                                         aria-label="Edit"
                                         onClick={() => history.push(`/app/quotations/edit/${quotation._id}`)}
+                                        style={{ minWidth: '40px', minHeight: '40px', padding: '8px' }}
                                     >
-                                        <IoPencil className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                                        <IoPencil className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                                     </Button>
                                 </div>
                             </div>
@@ -270,7 +277,7 @@ function ViewQuotations() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-6">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Client
@@ -296,7 +303,8 @@ function ViewQuotations() {
                                     </h4>
                                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                         <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {currency}                                         </p>
+                                            {currency}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -306,43 +314,46 @@ function ViewQuotations() {
                     <Card>
                         <CardBody>
                             <SectionTitle>Quotation Items</SectionTitle>
-                            <div className="overflow-x-auto mb-5">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                                            <th className="text-left py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                Product
-                                            </th>
-                                            <th className="text-left py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                Description
-                                            </th>
-                                            <th className="text-center py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                Quantity
-                                            </th>
-                                            <th className="text-right py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                Unit Price
-                                            </th>
-                                            <th className="text-right py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                Total
-                                            </th>
-                                        </tr>
-                                    </thead>
+                            <div className="overflow-x-auto lg:overflow-visible mb-5">
+                                <table className="w-full text-sm">     <thead>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <th className="text-left py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Product
+                                        </th>
+                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Qty
+                                        </th>
+                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Rate
+                                        </th>
+                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Discount
+                                        </th>
+                                        <th className="text-right py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Total
+                                        </th>
+                                    </tr>
+                                </thead>
                                     <tbody>
                                         {quotation.items?.map((item, index) => (
                                             <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
-                                                <td className="py-4 px-2 text-gray-800 dark:text-gray-200">
-                                                    {item.product?.name || 'N/A'}
+                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-gray-800 dark:text-gray-200">
+                                                    <div style={{ minWidth: '150px', wordBreak: 'break-word', lineHeight: '1.3' }}>
+                                                        {item.product?.name || 'N/A'}
+                                                    </div>
                                                 </td>
-                                                <td className="py-4 px-2 text-gray-600 dark:text-gray-400">
-                                                    {item.description || 'N/A'}
-                                                </td>
-                                                <td className="py-4 px-2 text-center text-gray-800 dark:text-gray-200">
+                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
                                                     {item.quantity || 1}
                                                 </td>
-                                                <td className="py-4 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.unitPrice || 0)}                                                </td>
-                                                <td className="py-4 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.totalPrice || 0)}                                                </td>
+                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                    {formatCurrency(item.unitPrice || 0)}
+                                                </td>
+                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
+                                                    {item.discountValue > 0 ? `${item.discountValue}%` : '-'}
+                                                </td>
+                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                    {formatCurrency(item.totalPrice || 0)}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -387,7 +398,7 @@ function ViewQuotations() {
                                 Quotation Summary
                             </h3>
 
-                            <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600 text-sm">
+                            <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600 text-xs lg:text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                                     <span className="text-gray-800 dark:text-gray-200 font-medium">
@@ -401,7 +412,8 @@ function ViewQuotations() {
                                             Discount ({quotation.discountType === 'percentage' ? `${quotation.discountValue}%` : 'Fixed'})
                                         </span>
                                         <span className="text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatCurrency(calculateDiscountAmount())}                                        </span>
+                                            {formatCurrency(calculateDiscountAmount())}
+                                        </span>
                                     </div>
                                 )}
 
@@ -411,16 +423,18 @@ function ViewQuotations() {
                                             Tax ({quotation.taxRate}%)
                                         </span>
                                         <span className="text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatCurrency(calculateTaxAmount())}                                        </span>
+                                            {formatCurrency(calculateTaxAmount())}
+                                        </span>
                                     </div>
                                 )}
 
                                 <div className="border-t border-dashed border-gray-300 dark:border-gray-600 pt-3 mt-3 flex justify-between items-center">
-                                    <span className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                                    <span className="text-lg lg:text-xl font-semibold text-gray-800 dark:text-gray-200">
                                         Total Amount
                                     </span>
-                                    <span className="text-2xl font-bold" style={{ color: "#AA1A21" }}>
-                                        {formatCurrency(calculateTotalAmount())}                                    </span>
+                                    <span className="text-xl lg:text-2xl font-bold" style={{ color: "#AA1A21" }}>
+                                        {formatCurrency(calculateTotalAmount())}
+                                    </span>
                                 </div>
                             </div>
                         </CardBody>
@@ -431,12 +445,13 @@ function ViewQuotations() {
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                 Actions
                             </h3>
-                            <div className="space-y-4">
+                            <div className="space-y-3 lg:space-y-4">
                                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Status                                            </span>
+                                                Status
+                                            </span>
                                             <span className="text-xs text-gray-500 dark:text-gray-400">
                                                 {quotation.status === 'quotation' ? 'Click to convert to Invoice' : 'Click to convert to Quotation'}
                                             </span>

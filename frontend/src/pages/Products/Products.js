@@ -56,7 +56,6 @@ function Products() {
     const [editingProduct, setEditingProduct] = useState(null)
     const [editFormData, setEditFormData] = useState({
         name: '',
-        description: '',
         sellingPrice: 0,
         purchasePrice: 0,
         size: ''
@@ -142,7 +141,6 @@ function Products() {
         setEditingProduct(product)
         setEditFormData({
             name: product.name,
-            description: product.description || '',
             sellingPrice: product.sellingPrice,
             purchasePrice: product.purchasePrice,
             size: product.size._id || product.size
@@ -238,7 +236,6 @@ function Products() {
         setEditingProduct(null)
         setEditFormData({
             name: '',
-            description: '',
             sellingPrice: 0,
             purchasePrice: 0,
             size: ''
@@ -524,17 +521,7 @@ function Products() {
                                 )}
                             </Label>
 
-                            <Label>
-                                <span>Description</span>
-                                <textarea
-                                    className="mt-1 block w-full pt-2 pl-2 border-2 border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    name="description"
-                                    value={editFormData.description}
-                                    onChange={handleEditInputChange}
-                                    rows="3"
-                                    placeholder="Enter product description"
-                                />
-                            </Label>
+                          
 
                             <Label>
                                 <span>Size *</span>

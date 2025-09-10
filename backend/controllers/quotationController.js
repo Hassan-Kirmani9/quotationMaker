@@ -665,10 +665,10 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
     <p><strong>Reference:</strong> ${quotation.quotationNo}</p>
 </div>
 ` : ''}
-    ${configuration && configuration.quotation && configuration.quotation.terms ? `
+${configuration && configuration.quotation && configuration.quotation.terms ? `
 <div class="terms-section">
     <h4>Terms & Conditions:</h4>
-    <p>${configuration.quotation.terms}</p>
+    <p style="white-space: pre-wrap;">${configuration.quotation.terms}</p>
 </div>
 ` : ''}
        </div>

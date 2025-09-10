@@ -75,9 +75,21 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
+    
+    const Size = require('../models/Size');
+    const size = await Size.findById(req.body.size);
+    
+    if (!size) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid size selected'
+      });
+    }
+
     const productData = {
       ...req.body,
-      user: req.user._id
+      user: req.user._id,
+      description: `${req.body.name} - ${size.name}` 
     };
 
     const product = new Product(productData);
@@ -103,9 +115,33 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
+    
+    let updateData = { ...req.body };
+    
+    if (req.body.size) {
+      const Size = require('../models/Size');
+      const size = await Size.findById(req.body.size);
+      
+      if (!size) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid size selected'
+        });
+      }
+      
+      
+      updateData.description = `${req.body.name} - ${size.name}`;
+    } else if (req.body.name) {
+      
+      const currentProduct = await Product.findOne({ _id: req.params.id, user: req.user._id }).populate('size');
+      if (currentProduct) {
+        updateData.description = `${req.body.name} - ${currentProduct.size.name}`;
+      }
+    }
+
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('size', 'name');
 
@@ -130,7 +166,6 @@ const updateProduct = async (req, res) => {
     });
   }
 };
-
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({

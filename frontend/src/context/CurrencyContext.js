@@ -12,8 +12,10 @@ export const useCurrency = () => {
 }
 
 export const CurrencyProvider = ({ children }) => {
-  const [currency, setCurrency] = useState('USD')
-  const [loading, setLoading] = useState(true)
+  const [currency, setCurrency] = useState(
+    localStorage.getItem('userCurrency') || 'PKR'
+  )
+  const [loading, setLoading] = useState(false)
 
   const currencySymbols = {
     'USD': '$',
@@ -30,50 +32,47 @@ export const CurrencyProvider = ({ children }) => {
   }
 
   const fetchCurrency = async () => {
-  try {
-    setLoading(true)
-    const token = localStorage.getItem('token')
-    if (!token) {
-      setLoading(false)
-      return
-    }
-    
-    const response = await get('/configuration', {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setLoading(false)
+        return
+      }
+      
+      const response = await get('/configuration', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (response.success) {
         const config = response.data.configuration
-        const currency = config?.quotation?.currency || config?.business?.currency
-        if (currency) {
-          setCurrency(currency)
+        const fetchedCurrency = config?.business?.currency
+        if (fetchedCurrency) {
+          setCurrency(fetchedCurrency)
+          localStorage.setItem('userCurrency', fetchedCurrency)
         }
       }
     } catch (error) {
       console.error('Error fetching currency from configuration:', error)
-      
     } finally {
       setLoading(false)
     }
   }
 
-useEffect(() => {
-  fetchCurrency()
-
-  
-  const handleCurrencyUpdate = (event) => {
-    const newCurrency = event.detail.currency
-    if (newCurrency && newCurrency !== currency) {
-      setCurrency(newCurrency) 
+  useEffect(() => {
+    const handleCurrencyUpdate = (event) => {
+      const newCurrency = event.detail.currency
+      if (newCurrency && newCurrency !== currency) {
+        setCurrency(newCurrency)
+        localStorage.setItem('userCurrency', newCurrency)
+      }
     }
-  }
 
-  window.addEventListener('currencyUpdated', handleCurrencyUpdate)
+    window.addEventListener('currencyUpdated', handleCurrencyUpdate)
 
-  
-  return () => {
-    window.removeEventListener('currencyUpdated', handleCurrencyUpdate)
-  }
-}, []) 
+    return () => {
+      window.removeEventListener('currencyUpdated', handleCurrencyUpdate)
+    }
+  }, [])
 
   const formatCurrency = (amount, showSymbol = true) => {
     try {
@@ -106,6 +105,7 @@ useEffect(() => {
 
   const updateCurrency = (newCurrency) => {
     setCurrency(newCurrency)
+    localStorage.setItem('userCurrency', newCurrency)
   }
 
   const refreshCurrency = () => {

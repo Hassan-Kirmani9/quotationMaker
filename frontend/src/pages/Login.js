@@ -73,14 +73,14 @@ function Login() {
         }
         return
       }
-
-      const { token, user } = response.data
-
+      const { token, user, currency } = response.data
 
       localStorage.setItem("token", token)
+      if (currency) {
+        localStorage.setItem("userCurrency", currency)
+      }
 
       if (isMounted.current) {
-
         login(token, user)
         history.push('/app')
       }

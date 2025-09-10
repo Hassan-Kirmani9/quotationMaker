@@ -13,7 +13,7 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -22,7 +22,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    
+
     const user = new User({
       name,
       email,
@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
 
     await user.save();
 
-    
+
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -63,7 +63,6 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({
@@ -72,7 +71,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    
     if (!user.isActive) {
       return res.status(400).json({
         success: false,
@@ -80,7 +78,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({
@@ -89,7 +86,16 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Fetch user's currency configuration
+    const Configuration = require('../models/Configuration');
+    let configuration = await Configuration.findOne({ user: user._id });
     
+    // Get currency from configuration or default to PKR
+    let currency = 'PKR';
+    if (configuration && configuration.business && configuration.business.currency) {
+      currency = configuration.business.currency;
+    }
+
     const token = generateToken(user._id);
 
     res.json({
@@ -102,7 +108,8 @@ const loginUser = async (req, res) => {
           email: user.email,
           role: user.role
         },
-        token
+        token,
+        currency
       }
     });
   } catch (error) {
@@ -119,7 +126,7 @@ const loginUser = async (req, res) => {
 const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     res.json({
       success: true,
       data: {
@@ -149,7 +156,7 @@ const updateProfile = async (req, res) => {
     const { name, email } = req.body;
     const userId = req.user._id;
 
-    
+
     if (email && email !== req.user.email) {
       const existingUser = await User.findOne({ email, _id: { $ne: userId } });
       if (existingUser) {
@@ -160,7 +167,7 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    
+
     const user = await User.findByIdAndUpdate(
       userId,
       { name, email },
@@ -195,10 +202,10 @@ const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user._id;
 
-    
+
     const user = await User.findById(userId);
 
-    
+
     const isCurrentPasswordValid = await user.comparePassword(currentPassword);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
@@ -207,7 +214,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    
+
     user.password = newPassword;
     await user.save();
 

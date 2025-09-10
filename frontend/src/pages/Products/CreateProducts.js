@@ -11,7 +11,6 @@ function CreateProducts() {
 
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     sellingPrice: 0,
     purchasePrice: 0,
     size: ''
@@ -71,9 +70,6 @@ function CreateProducts() {
       newErrors.name = 'Product name cannot exceed 200 characters'
     }
 
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Description cannot exceed 1000 characters'
-    }
 
     if (!formData.size) {
       newErrors.size = 'Size is required'
@@ -102,13 +98,12 @@ function CreateProducts() {
     setApiError('')
 
     try {
-      const cleanedData = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        sellingPrice: parseFloat(formData.sellingPrice),
-        purchasePrice: parseFloat(formData.purchasePrice),
-        size: formData.size
-      }
+const cleanedData = {
+  name: formData.name.trim(),
+  sellingPrice: parseFloat(formData.sellingPrice),
+  purchasePrice: parseFloat(formData.purchasePrice),
+  size: formData.size
+}
 
       const response = await post("/products", cleanedData)
 
@@ -190,22 +185,6 @@ function CreateProducts() {
               />
               {errors.name && (
                 <HelperText valid={false}>{errors.name}</HelperText>
-              )}
-            </Label>
-
-            <Label>
-              <span>Description</span>
-              <textarea
-                className="mt-1 block w-full pt-2 pl-2 border-2 border-gray-300 rounded-md shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows="4"
-                placeholder="Enter product description (optional)"
-                maxLength={1000}
-              />
-              {errors.description && (
-                <HelperText valid={false}>{errors.description}</HelperText>
               )}
             </Label>
 
