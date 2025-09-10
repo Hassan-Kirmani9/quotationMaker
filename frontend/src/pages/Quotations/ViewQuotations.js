@@ -94,7 +94,7 @@ function ViewQuotations() {
                 const url = window.URL.createObjectURL(blob)
                 const a = document.createElement('a')
                 a.href = url
-                a.download = `${quotation.status}-${quotation.quotationNo}.pdf`
+                a.download = `${quotation.quotationNo}.pdf`
                 document.body.appendChild(a)
                 a.click()
                 window.URL.revokeObjectURL(url)
@@ -269,7 +269,7 @@ function ViewQuotations() {
                                     </p>
                                 </div>
                             )}
- 
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -296,8 +296,7 @@ function ViewQuotations() {
                                     </h4>
                                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                         <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {quotation.currency || 'USD'}
-                                        </p>
+                                            {currency}                                         </p>
                                     </div>
                                 </div>
                             </div>

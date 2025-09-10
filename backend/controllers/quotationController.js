@@ -600,27 +600,37 @@ const generateQuotationPDF = async (req, res) => {
            </div>
        </div>
 
-     <table class="items-table">
+ <table class="items-table">
   <thead>
     <tr>
-        <th>Product</th>
+        <th>Particular</th>
         <th class="text-center">Size</th>
-        <th class="text-center">Quantity</th>
-        <th class="text-right">Unit Price</th>
-        <th class="text-right">Total Price</th>
+        <th class="text-center">Qty</th>
+        <th class="text-right">Rate</th>
+        <th class="text-center">Discount</th>
+        <th class="text-right">Total</th>
     </tr>
 </thead>
-    <tbody>
-  ${quotation.items.map(item => `
+  <tbody>
+  ${quotation.items.map(item => {
+      const quantity = item.quantity || 1;
+      const unitPrice = item.unitPrice || 0;
+      const subtotalBeforeDiscount = quantity * unitPrice;
+      const itemDiscountValue = item.discountValue || 0;
+      const itemDiscountAmount = item.discountAmount || 0;
+
+      return `
     <tr>
         <td>${(item.product && item.product.name) || item.description || 'N/A'}</td>
         <td class="text-center">${(item.product && item.product.size && item.product.size.name) || 'N/A'}</td>
-        <td class="text-center">${item.quantity || 1}</td>
-        <td class="text-right">${item.unitPrice || 0}</td>
+        <td class="text-center">${quantity}</td>
+        <td class="text-right">${unitPrice}</td>
+        <td class="text-center">${itemDiscountValue > 0 ? itemDiscountValue + '%' : '-'}</td>
         <td class="text-right">${item.totalPrice || 0}</td>
     </tr>
-`).join('')}
-    </tbody>
+`;
+    }).join('')}
+</tbody>
 </table>
 
        <div class="totals-section">
@@ -634,7 +644,7 @@ const generateQuotationPDF = async (req, res) => {
     <td class="text-right">${formatCurrency(discountAmount)}</td>
 </tr>
 <tr>
-    <td><strong>Tax:</strong></td>
+    <td><strong>Tax:</strong> ${taxRate > 0 ? `${taxRate}%` : ''}</td>
     <td class="text-right">${formatCurrency(taxAmount)}</td>
 </tr>
                <tr class="total-row">
@@ -671,8 +681,7 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
     ${configuration && configuration.business && configuration.business.web ? configuration.business.web : ''} | 
     </p>
    <p> ${configuration && configuration.business && configuration.business.address ? configuration.business.address : ''}</p>
-   <em><a href="https:
-           </div>
+<em>Powered by <a href="https://5cube.io" target="_blank" style="color: #666; text-decoration: none;">5cube.io</a></em>           </div>
        </div>
    </body>
    </html>
@@ -703,8 +712,7 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
 
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${quotation.status}-${quotation.quotationNo}.pdf"`);
-
+    res.setHeader('Content-Disposition', `attachment; filename="${quotation.quotationNo}.pdf"`);
     res.send(pdf);
 
   } catch (error) {

@@ -34,12 +34,12 @@ function Quotations() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    
+
     const resultsPerPage = 10
     const [totalResults, setTotalResults] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
 
-    
+
     const [searchTerm, setSearchTerm] = useState('')
 
     const fetchQuotations = async (page = 1, search = '') => {
@@ -47,7 +47,7 @@ function Quotations() {
             setLoading(true)
             setError('')
 
-            
+
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: resultsPerPage.toString()
@@ -74,13 +74,13 @@ function Quotations() {
         }
     }
 
-    
+
     const handleSearch = (e) => {
         const value = e.target.value
         setSearchTerm(value)
-        setPageTable(1) 
+        setPageTable(1)
 
-        
+
         const timeoutId = setTimeout(() => {
             fetchQuotations(1, value)
         }, 500)
@@ -125,8 +125,8 @@ function Quotations() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'accepted': 
-            case 'approved': 
+            case 'accepted':
+            case 'approved':
                 return 'bg-green-500'
             case 'sent': return 'bg-blue-500'
             case 'viewed': return 'bg-yellow-500'
@@ -190,7 +190,7 @@ function Quotations() {
                 </Button>
             </div>
 
-            {}
+            { }
             <div className="mb-4">
                 <Input
                     placeholder="Search quotations by number, title, or description..."
@@ -226,7 +226,7 @@ function Quotations() {
                 </div>
             ) : (
                 <>
-                    {}
+                    { }
                     <div className="hidden md:block">
                         <TableContainer className="mb-8">
                             <Table>
@@ -270,10 +270,10 @@ function Quotations() {
                                                     {new Date(quotation.date).toLocaleDateString()}
                                                 </span>
                                             </TableCell>
-                                         
+
                                             <TableCell>
                                                 <span className="text-sm font-semibold">
-                                                    {formatCurrency(quotation.totalAmount, quotation.currency || 'USD')}
+                                                    {quotation.totalAmount.toLocaleString()}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
@@ -323,7 +323,7 @@ function Quotations() {
                         </TableContainer>
                     </div>
 
-                    {}
+                    { }
                     <div className="block md:hidden">
                         <div className="space-y-4 mb-8">
                             {dataTable.map((quotation) => (
@@ -331,7 +331,7 @@ function Quotations() {
                                     key={quotation._id}
                                     className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 shadow-sm border border-green-200 relative"
                                 >
-                                    {}
+                                    { }
                                     <div className="flex justify-between items-start mb-4">
                                         <div className={`${getStatusColor(quotation.status)} text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide`}>
                                             {quotation.status === 'accepted' ? 'APPROVED' : quotation.status.toUpperCase()}
@@ -341,12 +341,12 @@ function Quotations() {
                                         </div>
                                     </div>
 
-                                    {}
+                                    { }
                                     <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight">
                                         {quotation.title}
                                     </h3>
 
-                                    {}
+                                    { }
                                     <div className="flex items-center mb-2 text-gray-600">
                                         <IoPerson className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm font-medium">
@@ -363,24 +363,24 @@ function Quotations() {
                                         </div>
                                     )}
 
-                                    {}
+                                    { }
                                     <div className="flex items-center mb-4 text-gray-600">
                                         <IoCalendarOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className={`text-sm ${new Date(quotation.validUntil) < new Date() ? 'text-red-600' : ''}`}>
-                                            Valid until {new Date(quotation.validUntil).toLocaleDateString('en-US', { 
-                                                year: 'numeric', 
-                                                month: '2-digit', 
-                                                day: '2-digit' 
+                                            Valid until {new Date(quotation.validUntil).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: '2-digit',
+                                                day: '2-digit'
                                             })}
                                         </span>
                                     </div>
 
-                                    {}
+                                    { }
                                     <div className="text-3xl font-bold text-green-700 mb-4">
-                                        {formatCurrency(quotation.totalAmount, quotation.currency || 'USD')}
+                                        {quotation.totalAmount.toLocaleString()}
                                     </div>
 
-                                    {}
+                                    { }
                                     <div className="flex justify-end space-x-2">
                                         <button
                                             onClick={() => history.push(`/app/quotations/view/${quotation._id}`)}
@@ -392,11 +392,10 @@ function Quotations() {
                                         <button
                                             onClick={() => history.push(`/app/quotations/edit/${quotation._id}`)}
                                             disabled={quotation.status === 'accepted' || quotation.status === 'expired'}
-                                            className={`bg-white border border-gray-300 rounded-lg p-2 transition-colors ${
-                                                quotation.status === 'accepted' || quotation.status === 'expired' 
-                                                    ? 'opacity-50 cursor-not-allowed' 
-                                                    : 'hover:bg-gray-50'
-                                            }`}
+                                            className={`bg-white border border-gray-300 rounded-lg p-2 transition-colors ${quotation.status === 'accepted' || quotation.status === 'expired'
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:bg-gray-50'
+                                                }`}
                                             aria-label="Edit"
                                         >
                                             <IoPencil className="w-5 h-5 text-gray-600" />
@@ -404,11 +403,10 @@ function Quotations() {
                                         <button
                                             onClick={() => handleDelete(quotation._id, quotation.quotationNo)}
                                             disabled={quotation.status === 'accepted'}
-                                            className={`bg-white border border-gray-300 rounded-lg p-2 transition-colors ${
-                                                quotation.status === 'accepted' 
-                                                    ? 'opacity-50 cursor-not-allowed' 
-                                                    : 'hover:bg-gray-50'
-                                            }`}
+                                            className={`bg-white border border-gray-300 rounded-lg p-2 transition-colors ${quotation.status === 'accepted'
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:bg-gray-50'
+                                                }`}
                                             aria-label="Delete"
                                         >
                                             <IoTrash className="w-5 h-5 text-gray-600" />
@@ -418,7 +416,7 @@ function Quotations() {
                             ))}
                         </div>
 
-                        {}
+                        { }
                         {totalPages > 1 && (
                             <div className="flex justify-center">
                                 <Pagination
