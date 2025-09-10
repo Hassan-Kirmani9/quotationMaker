@@ -338,7 +338,6 @@ function Products() {
                                     <tr>
                                         <TableCell>Product Name</TableCell>
                                         <TableCell>Size</TableCell>
-                                        <TableCell>Description</TableCell>
                                         <TableCell>Purchase Price</TableCell>
                                         <TableCell>Selling Price</TableCell>
                                         <TableCell>Actions</TableCell>
@@ -359,9 +358,7 @@ function Products() {
                                                     {product.size?.name || 'N/A'}
                                                 </span>
                                             </TableCell>
-                                            <TableCell>
-                                                <span className="text-sm">{product.description || 'No description'}</span>
-                                            </TableCell>
+                                            
                                             <TableCell>
                                                 <span className="text-sm">{formatCurrency(product.purchasePrice)}</span>
                                             </TableCell>

@@ -21,10 +21,18 @@ function AppRoutes() {
 
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/create-account" component={CreateAccount} />
-      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/login">
+        {isAuthenticated ? <Redirect to="/app" /> : <Login />}
+      </Route>
+      <Route path="/register">
+        {isAuthenticated ? <Redirect to="/app" /> : <Register />}
+      </Route>
+      <Route path="/create-account">
+        {isAuthenticated ? <Redirect to="/app" /> : <CreateAccount />}
+      </Route>
+      <Route path="/forgot-password">
+        {isAuthenticated ? <Redirect to="/app" /> : <ForgotPassword />}
+      </Route>
 
       <ProtectedRoute path="/app" component={Layout} />
 

@@ -594,8 +594,7 @@ const generateQuotationPDF = async (req, res) => {
 </div>
            
            <div class="document-details">
-               <p><strong>${quotation.status === 'invoice' ? 'Invoice' : 'Quotation'} #:</strong> ${quotation.quotationNo}</p>
-               <p><strong>Date:</strong> ${formatDate(quotation.date)}</p>
+<p><strong>${quotation.status === 'invoice' ? 'Invoice' : 'Quotation'} #:</strong> ${quotation.status === 'invoice' ? quotation.quotationNo.replace(/^QUO-/, 'INV-') : quotation.quotationNo}</p>               <p><strong>Date:</strong> ${formatDate(quotation.date)}</p>
                ${quotation.validUntil ? `<p><strong>Due Date:</strong> ${formatDate(quotation.validUntil)}</p>` : ''}
            </div>
        </div>
@@ -662,8 +661,6 @@ ${configuration && configuration.bank && configuration.bank.name && quotation.st
     <p><strong>Bank Name:</strong> ${configuration.bank.name}</p>
     <p><strong>Account Title:</strong> ${configuration.bank.accountName || ''}</p>
     <p><strong>Account No:</strong> ${configuration.bank.accountNumber || ''}</p>
-    <p><strong>Reference:</strong> ${quotation.quotationNo}</p>
-</div>
 ` : ''}
 ${configuration && configuration.quotation && configuration.quotation.terms ? `
 <div class="terms-section">
@@ -712,8 +709,8 @@ ${configuration && configuration.quotation && configuration.quotation.terms ? `
 
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${quotation.quotationNo}.pdf"`);
-    res.send(pdf);
+    const displayNumber = quotation.status === 'invoice' ? quotation.quotationNo.replace(/^QUO-/, 'INV-') : quotation.quotationNo;
+    res.setHeader('Content-Disposition', `attachment; filename="${displayNumber}.pdf"`); res.send(pdf);
 
   } catch (error) {
     console.error('Generate PDF error:', error);

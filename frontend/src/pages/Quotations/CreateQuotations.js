@@ -5,8 +5,7 @@ import PageTitle from '../../components/Typography/PageTitle'
 import SectionTitle from '../../components/Typography/SectionTitle'
 import { Input, Label, Button, Select, Textarea, HelperText } from '@windmill/react-ui'
 import { useCurrency } from '../../context/CurrencyContext'
-import { FaTable, FaTrash } from 'react-icons/fa'
-
+import { FaTable, FaTrash, FaPlus, FaMinus } from 'react-icons/fa'
 
 const AutocompleteSelect = ({ value, onChange, options, placeholder, error, className }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,12 +27,10 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
     setIsOpen(true);
     setHighlightedIndex(-1);
 
-
     if (term === '') {
       onChange('');
     }
   };
-
 
   const handleOptionSelect = (option) => {
     onChange(option._id);
@@ -41,7 +38,6 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
     setIsOpen(false);
     setHighlightedIndex(-1);
   };
-
 
   const handleKeyDown = (e) => {
     if (!isOpen) return;
@@ -73,15 +69,12 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
     }
   };
 
-
   const handleFocus = () => {
     setIsOpen(true);
     setSearchTerm('');
   };
 
-
   const handleBlur = (e) => {
-
     setTimeout(() => {
       if (!dropdownRef.current?.contains(e.relatedTarget)) {
         setIsOpen(false);
@@ -106,7 +99,6 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
         autoComplete="off"
       />
 
-      { }
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto dark:bg-gray-700 dark:text-gray-400">
           {filteredOptions.length === 0 ? (
@@ -131,6 +123,116 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
   );
 };
 
+const MobileItemCard = ({ item, index, productsList, errors, handleItemChange, removeQuotationItem, quotationItems }) => {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm dark:bg-gray-800 dark:border-gray-600">
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Item #{index + 1}</h4>
+        {quotationItems.length > 1 && (
+          <Button
+            type="button"
+            layout="outline"
+            onClick={() => removeQuotationItem(index)}
+            className="px-2 py-1 text-xs"
+            style={{ backgroundColor: '#ffffff' }}
+          >
+            <FaTrash className='text-red-700' />
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {/* Product Selection */}
+        <Label>
+          <span className="text-sm">Product *</span>
+          <AutocompleteSelect
+            value={item.product}
+            onChange={(value) => handleItemChange(index, 'product', value)}
+            options={productsList}
+            placeholder="Search and select product..."
+            error={errors[`item_${index}_product`]}
+            className="w-full mt-1"
+          />
+          {errors[`item_${index}_product`] && (
+            <HelperText valid={false} className="mt-1 text-xs">
+              {errors[`item_${index}_product`]}
+            </HelperText>
+          )}
+        </Label>
+
+        {/* Quantity and Unit Price Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <Label>
+            <span className="text-sm">Quantity *</span>
+            <Input
+              type="number"
+              step="1"
+              min="0"
+              value={item.quantity}
+              onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+              placeholder="1"
+              required
+              valid={!errors[`item_${index}_quantity`]}
+              className="w-full mt-1"
+            />
+            {errors[`item_${index}_quantity`] && (
+              <HelperText valid={false} className="mt-1 text-xs">
+                {errors[`item_${index}_quantity`]}
+              </HelperText>
+            )}
+          </Label>
+
+          <Label>
+            <span className="text-sm">Unit Price *</span>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={item.unitPrice}
+              onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+              placeholder="0.00"
+              required
+              valid={!errors[`item_${index}_unitPrice`]}
+              className="w-full mt-1"
+            />
+            {errors[`item_${index}_unitPrice`] && (
+              <HelperText valid={false} className="mt-1 text-xs">
+                {errors[`item_${index}_unitPrice`]}
+              </HelperText>
+            )}
+          </Label>
+        </div>
+
+        {/* Discount and Total Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <Label>
+            <span className="text-sm">Discount %</span>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={item.discountValue}
+              onChange={(e) => handleItemChange(index, 'discountValue', e.target.value)}
+              placeholder="0"
+              className="w-full mt-1"
+            />
+          </Label>
+
+          <Label>
+            <span className="text-sm">Total</span>
+            <Input
+              value={item.totalPrice}
+              readOnly
+              className="w-full bg-gray-50 mt-1"
+            />
+          </Label>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function CreateQuotations() {
   const history = useHistory()
   const { currency, formatCurrency, getCurrencySymbol } = useCurrency()
@@ -142,7 +244,6 @@ function CreateQuotations() {
     discountValue: 0,
     taxRate: 0,
     currency: '',
-
   })
 
   const [quotationItems, setQuotationItems] = useState([
@@ -163,14 +264,12 @@ function CreateQuotations() {
   const [productsList, setProductsList] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
-
   const [subtotal, setSubtotal] = useState(0)
   const [discountAmount, setDiscountAmount] = useState(0)
   const [taxAmount, setTaxAmount] = useState(0)
   const [totalAmount, setTotalAmount] = useState(0)
   const [grossAmount, setGrossAmount] = useState(0)
   const [itemDiscountsTotal, setItemDiscountsTotal] = useState(0)
-
 
   const fetchDropdownData = async () => {
     try {
@@ -189,8 +288,6 @@ function CreateQuotations() {
         setProductsList(productsResponse.data.products || [])
       }
 
-
-
     } catch (error) {
       console.error('Error fetching dropdown data:', error)
     } finally {
@@ -201,7 +298,6 @@ function CreateQuotations() {
   useEffect(() => {
     fetchDropdownData()
   }, [])
-
 
   useEffect(() => {
     const newSubtotal = quotationItems.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0)
@@ -220,14 +316,12 @@ function CreateQuotations() {
   }, [quotationItems, formData.discountType, formData.discountValue, formData.taxRate])
 
   useEffect(() => {
-
     const newGrossAmount = quotationItems.reduce((sum, item) => {
       const quantity = parseFloat(item.quantity) || 0
       const unitPrice = parseFloat(item.unitPrice) || 0
       return sum + (quantity * unitPrice)
     }, 0)
     setGrossAmount(newGrossAmount)
-
 
     const newItemDiscountsTotal = newGrossAmount - subtotal
     setItemDiscountsTotal(newItemDiscountsTotal)
@@ -252,11 +346,9 @@ function CreateQuotations() {
     }
   }
 
-
   const handleItemChange = (index, field, value) => {
     const items = [...quotationItems]
     items[index][field] = value
-
 
     if (field === 'product' && value) {
       const selectedProduct = productsList.find(p => p._id === value)
@@ -278,6 +370,7 @@ function CreateQuotations() {
 
     setQuotationItems(items)
   }
+  
   const addQuotationItem = () => {
     setQuotationItems([...quotationItems, {
       product: '',
@@ -306,7 +399,6 @@ function CreateQuotations() {
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required'
     }
-
 
     quotationItems.forEach((item, index) => {
       if (!item.product) {
@@ -347,10 +439,9 @@ function CreateQuotations() {
       }
 
       const response = await post("/quotations", quotationData)
-
       if (response.success) {
         alert('Quotation created successfully!')
-        history.push('/app/quotations')
+        history.push(`/app/quotations/view/${response.data.quotation._id}`)
       } else {
         setApiError(response.message || 'Failed to create quotation. Please try again.')
       }
@@ -400,7 +491,6 @@ function CreateQuotations() {
             </div>
           )}
 
-          { }
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Label>
               <span>Client *</span>
@@ -462,8 +552,8 @@ function CreateQuotations() {
             </Label>
           </div>
 
-          { }
-          <div className="mb-6">
+          {/* Items Section - Desktop Table View (Hidden on Mobile) */}
+          <div className="mb-6 hidden md:block">
             <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
               <table className="min-w-full border border-gray-200 rounded-lg dark:border-gray-800">
                 <thead className="bg-gray-50">
@@ -490,7 +580,7 @@ function CreateQuotations() {
                 </thead>
                 <tbody className="bg-white">
                   {quotationItems.map((item, index) => (
-                    <tr key={index} className="border-b  dark:border-gray-600">
+                    <tr key={index} className="border-b dark:border-gray-600">
                       <td className="px-2 py-3 dark:bg-gray-700 dark:text-gray-400">
                         <AutocompleteSelect
                           value={item.product}
@@ -575,7 +665,8 @@ function CreateQuotations() {
                             className="px-2 py-1 text-xs"
                             style={{ backgroundColor: '#ffffff' }}
                           >
-                            <FaTrash className='text-red-700' />                </Button>
+                            <FaTrash className='text-red-700' />
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -590,15 +681,46 @@ function CreateQuotations() {
               onClick={addQuotationItem}
               className="mt-4"
             >
+              <FaPlus className="mr-2" />
               Add Item
             </Button>
           </div>
-          { }
-          <SectionTitle>Pricing Details</SectionTitle>
-          <div className="mb-6">
-            <div className="grid grid-cols-12 gap-2 items-end">
 
-              { }
+          {/* Items Section - Mobile Card View (Visible on Mobile Only) */}
+          <div className="mb-6 md:hidden">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Quotation Items</h3>
+            
+            {quotationItems.map((item, index) => (
+              <MobileItemCard
+                key={index}
+                item={item}
+                index={index}
+                productsList={productsList}
+                errors={errors}
+                handleItemChange={handleItemChange}
+                removeQuotationItem={removeQuotationItem}
+                quotationItems={quotationItems}
+              />
+            ))}
+
+            <Button
+              type="button"
+              layout="outline"
+              onClick={addQuotationItem}
+              className="w-full mt-4 flex items-center justify-center"
+            >
+              <FaPlus className="mr-2" />
+              Add New Item
+            </Button>
+          </div>
+
+          {/* Pricing Details Section */}
+          <SectionTitle>Pricing Details</SectionTitle>
+          
+          {/* Desktop Pricing Layout (Hidden on Mobile) */}
+          <div className="mb-6 hidden md:block">
+            <div className="grid grid-cols-12 gap-2 items-end">
+              {/* Gross Amount */}
               <div className="col-span-3">
                 <Label>
                   <span className="text-sm">Gross Amount</span>
@@ -610,7 +732,7 @@ function CreateQuotations() {
                 </Label>
               </div>
 
-              { }
+              {/* Discount Percentage */}
               <div className="col-span-1">
                 <Label>
                   <span className="text-xs">Discount %</span>
@@ -638,7 +760,7 @@ function CreateQuotations() {
                 </Label>
               </div>
 
-              { }
+              {/* Discount Amount */}
               <div className="col-span-2">
                 <Label>
                   <span className="text-sm">Discount Amount</span>
@@ -650,7 +772,7 @@ function CreateQuotations() {
                 </Label>
               </div>
 
-              { }
+              {/* Tax Percentage */}
               <div className="col-span-1">
                 <Label>
                   <span className="text-sm">Tax %</span>
@@ -677,7 +799,7 @@ function CreateQuotations() {
                 </Label>
               </div>
 
-              { }
+              {/* Tax Amount */}
               <div className="col-span-2">
                 <Label>
                   <span className="text-sm">Tax Amount</span>
@@ -689,7 +811,7 @@ function CreateQuotations() {
                 </Label>
               </div>
 
-              { }
+              {/* Total Amount */}
               <div className="col-span-3">
                 <Label>
                   <span className="text-sm font-semibold">Total Amount</span>
@@ -702,19 +824,106 @@ function CreateQuotations() {
               </div>
             </div>
           </div>
-          <div className="flex justify-end space-x-4 mt-6">
+
+          {/* Mobile Pricing Layout (Visible on Mobile Only) */}
+          <div className="mb-6 md:hidden">
+            <div className="space-y-4">
+              {/* Gross Amount */}
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg dark:bg-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Gross Amount:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
+              </div>
+
+              {/* Discount Section */}
+              <div className="bg-gray-50 rounded-lg p-3 dark:bg-gray-700">
+                <div className="grid grid-cols-2 gap-3">
+                  <Label>
+                    <span className="text-sm">Discount %</span>
+                    <div className="relative mt-1">
+                      <Input
+                        name="discountValue"
+                        value={formData.discountValue}
+                        onChange={handleInputChange}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="99"
+                        placeholder="0"
+                        className="pr-8"
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <span className="text-gray-500 text-sm">%</span>
+                      </div>
+                    </div>
+                  </Label>
+                  
+                  <Label>
+                    <span className="text-sm">Discount Amount</span>
+                    <Input
+                      value={formatCurrency(discountAmount)}
+                      className="mt-1 bg-white"
+                      readOnly
+                    />
+                  </Label>
+                </div>
+              </div>
+
+              {/* Tax Section */}
+              <div className="bg-gray-50 rounded-lg p-3 dark:bg-gray-700">
+                <div className="grid grid-cols-2 gap-3">
+                  <Label>
+                    <span className="text-sm">Tax %</span>
+                    <div className="relative mt-1">
+                      <Input
+                        name="taxRate"
+                        value={formData.taxRate}
+                        onChange={handleInputChange}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="99"
+                        className="pr-8"
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <span className="text-gray-500 text-sm">%</span>
+                      </div>
+                    </div>
+                  </Label>
+                  
+                  <Label>
+                    <span className="text-sm">Tax Amount</span>
+                    <Input
+                      value={formatCurrency(taxAmount)}
+                      className="mt-1 bg-white"
+                      readOnly
+                    />
+                  </Label>
+                </div>
+              </div>
+
+              {/* Total Amount */}
+              <div className="flex justify-between items-center p-4 rounded-lg">
+                <span className="text-lg font-bold">Total Amount:</span>
+                <span className="text-lg font-bold">{currency} {totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons - Responsive Layout */}
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-6">
             <Button
               type="button"
               layout="outline"
               onClick={handleCancel}
               disabled={loading}
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               style={{ backgroundColor: "#AA1A21" }}
-              className="text-white"
+              className="text-white w-full sm:w-auto order-1 sm:order-2"
               disabled={loading || clientsList.length === 0 || productsList.length === 0}
             >
               {loading ? 'Creating...' : 'Create Quotation'}

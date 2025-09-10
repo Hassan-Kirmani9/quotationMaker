@@ -97,7 +97,7 @@ function ViewQuotations() {
                 const url = window.URL.createObjectURL(blob)
                 const a = document.createElement('a')
                 a.href = url
-                a.download = `${quotation.quotationNo}.pdf`
+                a.download = `${getDisplayNumber()}.pdf`
                 document.body.appendChild(a)
                 a.click()
                 window.URL.revokeObjectURL(url)
@@ -121,6 +121,14 @@ function ViewQuotations() {
             month: 'long',
             day: 'numeric'
         })
+    }
+
+    const getDisplayNumber = () => {
+        if (!quotation.quotationNo) return 'N/A'
+        if (quotation.status === 'invoice') {
+            return quotation.quotationNo.replace(/^QUO-/, 'INV-')
+        }
+        return quotation.quotationNo
     }
 
     const calculateSubtotal = () => {
@@ -216,16 +224,26 @@ function ViewQuotations() {
                     <Card>
                         <CardBody>
                             <div className="mb-6">
-                                {/* Title Section */}
+                                {/* Title Section with Edit Button */}
                                 <div className="mb-4">
-                                    <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1" style={{ wordBreak: 'break-words' }}>
-                                        {quotation.title}
-                                    </h2>
+                                    <div className="flex items-start justify-between mb-1">
+                                        <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200" style={{ wordBreak: 'break-words' }}>
+                                            {quotation.title}
+                                        </h2>
+                                        <Button
+                                            layout="link"
+                                            size="icon"
+                                            aria-label="Edit"
+                                            onClick={() => history.push(`/app/quotations/edit/${quotation._id}`)}
+                                            style={{ minWidth: '40px', minHeight: '40px', padding: '8px' }}
+                                        >
+                                            <IoPencil className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                        </Button>
+                                    </div>
                                     <p className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-400">
-                                        Quotation #{quotation.quotationNo}
+                                        #{getDisplayNumber()}
                                     </p>
                                 </div>
-
                                 {/* Date Section - Mobile Optimized */}
                                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                                     <div className="flex-1">
@@ -247,22 +265,11 @@ function ViewQuotations() {
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Status and Edit Button */}
-                                <div className="flex items-center justify-between">
+                                {/* Status Badge */}
+                                <div className="flex items-center justify-start">
                                     <Badge type={getStatusBadgeType(quotation.status)} className="text-xs px-2 py-1">
                                         {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
                                     </Badge>
-
-                                    <Button
-                                        layout="link"
-                                        size="icon"
-                                        aria-label="Edit"
-                                        onClick={() => history.push(`/app/quotations/edit/${quotation._id}`)}
-                                        style={{ minWidth: '40px', minHeight: '40px', padding: '8px' }}
-                                    >
-                                        <IoPencil className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                                    </Button>
                                 </div>
                             </div>
 
@@ -321,6 +328,9 @@ function ViewQuotations() {
                                             Product
                                         </th>
                                         <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
+                                            Size
+                                        </th>
+                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
                                             Qty
                                         </th>
                                         <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
@@ -341,6 +351,9 @@ function ViewQuotations() {
                                                     <div style={{ minWidth: '150px', wordBreak: 'break-word', lineHeight: '1.3' }}>
                                                         {item.product?.name || 'N/A'}
                                                     </div>
+                                                </td>
+                                                <td className="py-4 px-2 text-center text-gray-800 dark:text-gray-200">
+                                                    {item.product?.size?.name || 'N/A'}
                                                 </td>
                                                 <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
                                                     {item.quantity || 1}
@@ -430,7 +443,7 @@ function ViewQuotations() {
 
                                 <div className="border-t border-dashed border-gray-300 dark:border-gray-600 pt-3 mt-3 flex justify-between items-center">
                                     <span className="text-lg lg:text-xl font-semibold text-gray-800 dark:text-gray-200">
-                                        Total Amount
+                                        Total
                                     </span>
                                     <span className="text-xl lg:text-2xl font-bold" style={{ color: "#AA1A21" }}>
                                         {formatCurrency(calculateTotalAmount())}
@@ -506,11 +519,7 @@ function ViewQuotations() {
                                             Invoice
                                         </span>
                                     </div>
-                                    <div className="mt-3 text-center">
-                                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                            Currently: {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-                                        </span>
-                                    </div>
+
                                 </div>
                                 <Button
                                     block

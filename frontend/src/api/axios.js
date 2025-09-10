@@ -4,7 +4,7 @@ let BASE_URL;
 
 if (process.env.NODE_ENV === "production") {
   console.log("Running in Production Mode");
-  // BASE_URL = "https://backend-white-water-1093.fly.dev/api";
+  BASE_URL = "https://backend-white-water-1093.fly.dev/api";
 } else {
   console.log("Running in Development Mode");
   BASE_URL = "http://localhost:5000/api";

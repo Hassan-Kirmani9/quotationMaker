@@ -34,19 +34,24 @@ function Quotations() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-
     const resultsPerPage = 10
     const [totalResults, setTotalResults] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
 
-
     const [searchTerm, setSearchTerm] = useState('')
+
+    const getDisplayNumber = (quotation) => {
+        if (!quotation.quotationNo) return 'N/A'
+        if (quotation.status === 'invoice') {
+            return quotation.quotationNo.replace(/^QUO-/, 'INV-')
+        }
+        return quotation.quotationNo
+    }
 
     const fetchQuotations = async (page = 1, search = '') => {
         try {
             setLoading(true)
             setError('')
-
 
             const params = new URLSearchParams({
                 page: page.toString(),
@@ -74,12 +79,10 @@ function Quotations() {
         }
     }
 
-
     const handleSearch = (e) => {
         const value = e.target.value
         setSearchTerm(value)
         setPageTable(1)
-
 
         const timeoutId = setTimeout(() => {
             fetchQuotations(1, value)
@@ -88,10 +91,11 @@ function Quotations() {
         return () => clearTimeout(timeoutId)
     }
 
-    const handleDelete = async (id, quotationNo) => {
-        if (window.confirm(`Are you sure you want to delete quotation ${quotationNo}? This action cannot be undone.`)) {
+    const handleDelete = async (quotation) => {
+        const displayNumber = getDisplayNumber(quotation);
+        if (window.confirm(`Are you sure you want to delete quotation ${displayNumber}? This action cannot be undone.`)) {
             try {
-                const response = await _delete(`/quotations/${id}`)
+                const response = await _delete(`/quotations/${quotation._id}`)
 
                 if (response.success) {
                     fetchQuotations(pageTable, searchTerm)
@@ -119,6 +123,8 @@ function Quotations() {
             case 'draft': return 'neutral'
             case 'rejected': return 'danger'
             case 'expired': return 'danger'
+            case 'invoice': return 'success'
+            case 'quotation': return 'primary'
             default: return 'neutral'
         }
     }
@@ -127,8 +133,10 @@ function Quotations() {
         switch (status) {
             case 'accepted':
             case 'approved':
+            case 'invoice':
                 return 'bg-green-500'
-            case 'sent': return 'bg-blue-500'
+            case 'sent': 
+            case 'quotation': return 'bg-blue-500'
             case 'viewed': return 'bg-yellow-500'
             case 'draft': return 'bg-gray-500'
             case 'rejected': return 'bg-red-500'
@@ -190,7 +198,6 @@ function Quotations() {
                 </Button>
             </div>
 
-            { }
             <div className="mb-4">
                 <Input
                     placeholder="Search quotations by number, title, or description..."
@@ -226,7 +233,6 @@ function Quotations() {
                 </div>
             ) : (
                 <>
-                    { }
                     <div className="hidden md:block">
                         <TableContainer className="mb-8">
                             <Table>
@@ -250,7 +256,7 @@ function Quotations() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="font-semibold">{quotation.quotationNo}</span>
+                                                <span className="font-semibold">{getDisplayNumber(quotation)}</span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-sm">{quotation.title}</span>
@@ -299,7 +305,7 @@ function Quotations() {
                                                         layout="link"
                                                         size="icon"
                                                         aria-label="Delete"
-                                                        onClick={() => handleDelete(quotation._id, quotation.quotationNo)}
+                                                        onClick={() => handleDelete(quotation)}
                                                         disabled={quotation.status === 'accepted'}
                                                     >
                                                         <IoTrash className="w-4 h-4" />
@@ -323,7 +329,6 @@ function Quotations() {
                         </TableContainer>
                     </div>
 
-                    { }
                     <div className="block md:hidden">
                         <div className="space-y-4 mb-8">
                             {dataTable.map((quotation) => (
@@ -331,22 +336,19 @@ function Quotations() {
                                     key={quotation._id}
                                     className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 shadow-sm border border-green-200 relative"
                                 >
-                                    { }
                                     <div className="flex justify-between items-start mb-4">
                                         <div className={`${getStatusColor(quotation.status)} text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide`}>
                                             {quotation.status === 'accepted' ? 'APPROVED' : quotation.status.toUpperCase()}
                                         </div>
                                         <div className="text-gray-600 font-medium text-sm">
-                                            {quotation.quotationNo}
+                                            {getDisplayNumber(quotation)}
                                         </div>
                                     </div>
 
-                                    { }
                                     <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight">
                                         {quotation.title}
                                     </h3>
 
-                                    { }
                                     <div className="flex items-center mb-2 text-gray-600">
                                         <IoPerson className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm font-medium">
@@ -363,7 +365,6 @@ function Quotations() {
                                         </div>
                                     )}
 
-                                    { }
                                     <div className="flex items-center mb-4 text-gray-600">
                                         <IoCalendarOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className={`text-sm ${new Date(quotation.validUntil) < new Date() ? 'text-red-600' : ''}`}>
@@ -375,12 +376,10 @@ function Quotations() {
                                         </span>
                                     </div>
 
-                                    { }
                                     <div className="text-3xl font-bold text-green-700 mb-4">
                                         {quotation.totalAmount.toLocaleString()}
                                     </div>
 
-                                    { }
                                     <div className="flex justify-end space-x-2">
                                         <button
                                             onClick={() => history.push(`/app/quotations/view/${quotation._id}`)}
@@ -401,7 +400,7 @@ function Quotations() {
                                             <IoPencil className="w-5 h-5 text-gray-600" />
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(quotation._id, quotation.quotationNo)}
+                                            onClick={() => handleDelete(quotation)}
                                             disabled={quotation.status === 'accepted'}
                                             className={`bg-white border border-gray-300 rounded-lg p-2 transition-colors ${quotation.status === 'accepted'
                                                 ? 'opacity-50 cursor-not-allowed'
@@ -416,7 +415,6 @@ function Quotations() {
                             ))}
                         </div>
 
-                        { }
                         {totalPages > 1 && (
                             <div className="flex justify-center">
                                 <Pagination
