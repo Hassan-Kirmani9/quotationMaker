@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "**": {
-      "runtime": "nodejs14.x"
-    }
-  }
-}
