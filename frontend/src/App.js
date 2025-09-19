@@ -11,6 +11,7 @@ const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const CreateAccount = lazy(() => import('./pages/CreateAccount'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const AccessDenied = lazy(() => import('./pages/AccessDenied'))
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth()
@@ -33,16 +34,17 @@ function AppRoutes() {
       <Route path="/forgot-password">
         {isAuthenticated ? <Redirect to="/app" /> : <ForgotPassword />}
       </Route>
+      <Route path="/access-denied" component={AccessDenied} />
 
       <ProtectedRoute path="/app" component={Layout} />
 
-      {/* Conditional redirect based on auth status */}
       <Route exact path="/">
         {isAuthenticated ? <Redirect to="/app" /> : <Redirect to="/login" />}
       </Route>
     </Switch>
   )
 }
+
 function App() {
   return (
     <AuthProvider>

@@ -9,7 +9,26 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [config, setConfig] = useState(null) 
+  const [config, setConfig] = useState(null)
+  const [accessiblePages, setAccessiblePages] = useState([])
+  const [organization, setOrganization] = useState(null)
+
+  const checkPageAccess = (pagePath) => {
+    if (!user || !accessiblePages.length) return false
+    if (user.role === 'admin') return true
+    return accessiblePages.includes(pagePath)
+  }
+
+  const getAllAvailablePages = () => {
+    return [
+      "/dashboard",
+      "/quotations", 
+      "/clients",
+      "/products",
+      "/sizes",
+      "/configuration"
+    ]
+  }
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -19,11 +38,21 @@ export const AuthProvider = ({ children }) => {
         headers: {
           Authorization: `Bearer ${token}`
         }
-      }).then(data => {
-        setUser(data)
-      }).catch(() => {
+      }).then(response => {
+        const userData = response.data.user
+        setUser(userData)
+        setAccessiblePages(userData.accessible_pages || [])
+        setOrganization({
+          id: userData.organization_id,
+          name: userData.organization_name
+        })
+      }).catch((error) => {
+        console.error('Auth check failed:', error)
         localStorage.removeItem('token')
         setIsAuthenticated(false)
+        setUser(null)
+        setAccessiblePages([])
+        setOrganization(null)
       })
     }
 
@@ -43,10 +72,8 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    
     fetchConfig()
 
-    
     const handleConfigUpdate = () => {
       fetchConfig()
     }
@@ -55,26 +82,87 @@ export const AuthProvider = ({ children }) => {
 
     setLoading(false)
 
-    
     return () => {
       window.removeEventListener('currencyUpdated', handleConfigUpdate)
     }
   }, [])
 
-  const login = (token, userData) => {
-    localStorage.setItem('token', token)
-    setIsAuthenticated(true)
+const login = async (token, userData) => {
+  localStorage.setItem('token', token)
+  setIsAuthenticated(true)
+  
+  try {
+    const response = await get('/auth/me', {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    
+    const fullUserData = response.data.user
+    setUser(fullUserData)
+    setAccessiblePages(fullUserData.accessible_pages || [])
+    setOrganization({
+      id: fullUserData.organization_id,
+      name: fullUserData.organization_name
+    })
+  } catch (error) {
+    console.error('Failed to fetch user profile after login:', error)
     setUser(userData)
+    setAccessiblePages(userData.accessible_pages || [])
+    setOrganization({
+      id: userData.organization_id,
+      name: userData.organization_name
+    })
   }
+}
 
   const logout = () => {
     localStorage.removeItem('token')
     setIsAuthenticated(false)
     setUser(null)
+    setAccessiblePages([])
+    setOrganization(null)
+    setConfig(null)
+  }
+
+  const updateUserPermissions = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const response = await get('/auth/permissions', {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        const userData = response.data.user
+        const permissions = response.data.permissions
+        
+        setUser(prevUser => ({
+          ...prevUser,
+          ...userData
+        }))
+        setAccessiblePages(permissions.accessible_pages || [])
+      }
+    } catch (error) {
+      console.error('Failed to update user permissions:', error)
+    }
+  }
+
+  const contextValue = {
+    isAuthenticated,
+    login,
+    logout,
+    user,
+    loading,
+    config,
+    accessiblePages,
+    organization,
+    checkPageAccess,
+    getAllAvailablePages,
+    updateUserPermissions
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, user, loading, config }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

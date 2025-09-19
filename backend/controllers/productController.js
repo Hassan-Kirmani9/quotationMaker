@@ -3,9 +3,9 @@ const Product = require('../models/Product');
 const getProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
-    const userId = req.user._id;
+    const organizationId = req.user.organization_id._id;
 
-    const query = { user: userId };
+    const query = { organization_id: organizationId };
     
     if (search) {
       query.$or = [
@@ -15,7 +15,9 @@ const getProducts = async (req, res) => {
     }
 
     const products = await Product.find(query)
-      .populate('size', 'name') 
+      .populate('size', 'name')
+      .populate('created_by', 'name email')
+      .populate('modified_by', 'name email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -49,8 +51,11 @@ const getProduct = async (req, res) => {
   try {
     const product = await Product.findOne({ 
       _id: req.params.id, 
-      user: req.user._id 
-    }).populate('size', 'name');
+      organization_id: req.user.organization_id._id 
+    })
+    .populate('size', 'name')
+    .populate('created_by', 'name email')
+    .populate('modified_by', 'name email');
 
     if (!product) {
       return res.status(404).json({
@@ -75,7 +80,6 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    
     const Size = require('../models/Size');
     const size = await Size.findById(req.body.size);
     
@@ -89,14 +93,16 @@ const createProduct = async (req, res) => {
     const productData = {
       ...req.body,
       user: req.user._id,
+      organization_id: req.user.organization_id._id,
+      created_by: req.user._id,
       description: `${req.body.name} - ${size.name}` 
     };
 
     const product = new Product(productData);
     await product.save();
 
-    
     await product.populate('size', 'name');
+    await product.populate('created_by', 'name email');
 
     res.status(201).json({
       success: true,
@@ -115,8 +121,10 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    
-    let updateData = { ...req.body };
+    let updateData = { 
+      ...req.body,
+      modified_by: req.user._id
+    };
     
     if (req.body.size) {
       const Size = require('../models/Size');
@@ -129,21 +137,28 @@ const updateProduct = async (req, res) => {
         });
       }
       
-      
       updateData.description = `${req.body.name} - ${size.name}`;
     } else if (req.body.name) {
-      
-      const currentProduct = await Product.findOne({ _id: req.params.id, user: req.user._id }).populate('size');
+      const currentProduct = await Product.findOne({ 
+        _id: req.params.id, 
+        organization_id: req.user.organization_id._id 
+      }).populate('size');
       if (currentProduct) {
         updateData.description = `${req.body.name} - ${currentProduct.size.name}`;
       }
     }
 
     const product = await Product.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
+      { 
+        _id: req.params.id, 
+        organization_id: req.user.organization_id._id 
+      },
       updateData,
       { new: true, runValidators: true }
-    ).populate('size', 'name');
+    )
+    .populate('size', 'name')
+    .populate('created_by', 'name email')
+    .populate('modified_by', 'name email');
 
     if (!product) {
       return res.status(404).json({
@@ -166,17 +181,31 @@ const updateProduct = async (req, res) => {
     });
   }
 };
+
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({
       _id: req.params.id,
-      user: req.user._id
+      organization_id: req.user.organization_id._id
     });
 
     if (!product) {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
+      });
+    }
+
+    const Quotation = require('../models/Quotation');
+    const quotationCount = await Quotation.countDocuments({ 
+      'items.product': req.params.id,
+      organization_id: req.user.organization_id._id 
+    });
+
+    if (quotationCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete product used in quotations. Please remove from quotations first.'
       });
     }
 

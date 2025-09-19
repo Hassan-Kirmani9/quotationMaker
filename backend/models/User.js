@@ -28,11 +28,19 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  organization_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: [true, 'Organization is required']
+  },
+  accessible_pages: [{
+    type: String,
+    trim: true
+  }]
 }, {
   timestamps: true
 });
-
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
@@ -48,16 +56,19 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-
 userSchema.methods.comparePassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
   return user;
 };
+
+userSchema.index({ email: 1 });
+userSchema.index({ organization_id: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('User', userSchema);

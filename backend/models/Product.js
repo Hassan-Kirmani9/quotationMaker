@@ -31,6 +31,20 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  organization_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: [true, 'Organization is required']
+  },
+  created_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Created by user is required']
+  },
+  modified_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true
@@ -39,5 +53,7 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ user: 1 });
 productSchema.index({ size: 1 });
 productSchema.index({ name: 'text', description: 'text' });
+productSchema.index({ organization_id: 1 });
+productSchema.index({ created_by: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

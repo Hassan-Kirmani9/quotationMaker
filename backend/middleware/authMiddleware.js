@@ -3,8 +3,7 @@ const User = require('../models/User');
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    const token = req.header('Authorization')?.replace('Bearer ', '') || req.query.token;    
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -29,25 +28,14 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    if (!user.accessible_pages || user.accessible_pages.length === 0) {
+      user.accessible_pages = ['/dashboard', '/quotations', '/clients', '/products', '/sizes', '/configuration'];
+    }
+
     req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token has expired.'
-      });
-    }
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token.'
-      });
-    }
-    
     res.status(500).json({
       success: false,
       message: 'Server error in authentication.'

@@ -2,6 +2,7 @@ import React, { useContext, Suspense, useEffect, lazy } from 'react'
 import { Switch, Route, Redirect, useLocation } from 'react-router-dom'
 import routes from '../routes'
 import { useAuth } from '../context/AuthContext'
+import ProtectedRoute from '../components/ProtectedRoute'
 
 import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
@@ -10,17 +11,21 @@ import ThemedSuspense from '../components/ThemedSuspense'
 import { SidebarContext } from '../context/SidebarContext'
 
 const Page404 = lazy(() => import('../pages/404'))
+const AccessDenied = lazy(() => import('../pages/AccessDenied'))
 
 function Layout() {
   const { isSidebarOpen, closeSidebar } = useContext(SidebarContext)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
   let location = useLocation()
 
   useEffect(() => {
     closeSidebar()
   }, [location])
 
-  // This is already handled by ProtectedRoute, but adding as extra security
+  if (loading) {
+    return <ThemedSuspense />
+  }
+
   if (!isAuthenticated) {
     return <Redirect to="/login" />
   }
@@ -38,14 +43,16 @@ function Layout() {
             <Switch>
               {routes.map((route, i) => {
                 return route.component ? (
-                  <Route
+                  <ProtectedRoute
                     key={i}
                     exact={true}
                     path={`/app${route.path}`}
-                    render={(props) => <route.component {...props} />}
+                    component={route.component}
+                    requiredPage={route.requiredPage}
                   />
                 ) : null
               })}
+              <Route path="/app/access-denied" component={AccessDenied} />
               <Redirect exact from="/app" to="/app/dashboard" />
               <Route component={Page404} />
             </Switch>

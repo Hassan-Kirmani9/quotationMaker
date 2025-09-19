@@ -11,12 +11,16 @@ function Icon({ icon, ...props }) {
 }
 
 const SidebarContent = () => {
-  const { config } = useAuth();
+  const { config, checkPageAccess } = useAuth();
+
+  const filteredRoutes = routes.filter(route => {
+    if (!route.requiredPage) return true;
+    return checkPageAccess(route.requiredPage);
+  });
 
   return (
     <div className="py-4 text-gray-500 dark:text-gray-400">
       <div className="flex justify-center mb-6" href="/">
-
         {config?.business?.logo && (
           <a href="/">
             <img
@@ -29,7 +33,7 @@ const SidebarContent = () => {
       </div>
 
       <ul className="mt-6">
-        {routes.map((route) =>
+        {filteredRoutes.map((route) =>
           route.routes ? (
             <SidebarSubmenu route={route} key={route.name} />
           ) : (

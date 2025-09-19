@@ -1,6 +1,5 @@
 import { lazy } from 'react'
 
-// const Dashboard = lazy(() => import('../pages/Dashboard'))
 const Forms = lazy(() => import('../pages/Forms'))
 const Cards = lazy(() => import('../pages/Cards'))
 const Charts = lazy(() => import('../pages/Charts'))
@@ -33,92 +32,112 @@ const routes = [
   {
     path: '/dashboard',
     component: Dashboard,
+    requiredPage: '/dashboard'
   },
   {
     path: '/clients',
     component: Clients,
+    requiredPage: '/clients'
   },
   {
     path: '/clients/create',
     component: CreateClients,
+    requiredPage: '/clients'
   },
   {
     path: '/clients/edit/:id',
-    component: EditClient
+    component: EditClient,
+    requiredPage: '/clients'
   },
-
   {
     path: '/products',
     component: Products,
+    requiredPage: '/products'
   },
   {
     path: '/products/create',
     component: CreateProducts,
+    requiredPage: '/products'
   },
   {
     path: '/projects/edit/:id',
-    component: EditProjects
+    component: EditProjects,
+    requiredPage: '/products'
   },
   {
     path: '/quotations',
     component: Quotations,
+    requiredPage: '/quotations'
   },
   {
     path: '/sizes',
     component: Size,
+    requiredPage: '/sizes'
   },
   {
     path: '/quotations/create',
     component: CreateQuotations,
+    requiredPage: '/quotations'
   },
   {
     path: '/quotations/edit/:id',
-    component: EditQuotations
+    component: EditQuotations,
+    requiredPage: '/quotations'
   },
-
   {
     path: '/quotations/view/:id',
     component: ViewQuotations,
+    requiredPage: '/quotations'
   },
   {
     path: '/forms',
     component: Forms,
+    requiredPage: null
   },
   {
     path: '/cards',
     component: Cards,
+    requiredPage: null
   },
   {
     path: '/charts',
     component: Charts,
+    requiredPage: null
   },
   {
     path: '/buttons',
     component: Buttons,
+    requiredPage: null
   },
   {
     path: '/modals',
     component: Modals,
+    requiredPage: null
   },
   {
     path: '/tables',
     component: Tables,
+    requiredPage: null
   },
   {
     path: '/404',
     component: Page404,
+    requiredPage: null
   },
   {
     path: '/blank',
     component: Blank,
+    requiredPage: null
   },
   {
     path: '/configuration',
     component: Configuration,
+    requiredPage: '/configuration'
   },
   {
     path: '/configuration/create',
     component: CreateConfiguration,
+    requiredPage: '/configuration'
   }
 ]
 

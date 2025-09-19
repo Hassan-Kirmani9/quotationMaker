@@ -10,7 +10,9 @@ const routes = require('./routes');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://luminous-rolypoly-9e31ea.netlify.app'],
+  origin: ['http://localhost:3000', 'https://luminous-rolypoly-9e31ea.netlify.app', 'http://localhost:8081',   
+    'http://192.168.18.7:8081',  
+    'exp://192.168.18.7:8081',],
   credentials: true
 })); app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

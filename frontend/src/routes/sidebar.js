@@ -1,47 +1,40 @@
-/**
- * ⚠ These are used just to render the Sidebar!
- * You can include any link here, local or external.
-*
-* If you're looking to actual Router routes, go to
-* `routes/index.js`
-*/
 const routes = [
-   
   {
     path: '/app/dashboard',
     icon: 'PeopleIcon',
     name: 'Dashboard',
+    requiredPage: '/dashboard'
   },
   {
     path: '/app/quotations',
     icon: 'FormsIcon',
     name: 'Quotations',
+    requiredPage: '/quotations'
   },
   {
-    path: '/app/clients', // the url
-    icon: 'HomeIcon', // the component being exported from icons/index.js
-    name: 'Clients', // name that appear in Sidebar
+    path: '/app/clients',
+    icon: 'HomeIcon',
+    name: 'Clients',
+    requiredPage: '/clients'
   },
   {
     path: '/app/products',
     icon: 'ChartsIcon',
     name: 'Products',
+    requiredPage: '/products'
   },
   {
     path: '/app/sizes',
     icon: 'ButtonsIcon',
     name: 'Sizes',
+    requiredPage: '/sizes'
   },
-
- {
+  {
     path: '/app/configuration',
     icon: 'MenuIcon',
     name: 'Configuration',
-    
-  },
- 
-
-
+    requiredPage: '/configuration'
+  }
 ]
 
 export default routes

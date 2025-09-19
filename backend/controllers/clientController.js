@@ -1,13 +1,11 @@
 const Client = require('../models/Client');
 
-
 const getClients = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
-    const userId = req.user._id;
+    const organizationId = req.user.organization_id._id;
 
-    
-    const query = { user: userId };
+    const query = { organization_id: organizationId };
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -17,8 +15,9 @@ const getClients = async (req, res) => {
       ];
     }
 
-    
     const clients = await Client.find(query)
+      .populate('created_by', 'name email')
+      .populate('modified_by', 'name email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -48,13 +47,14 @@ const getClients = async (req, res) => {
   }
 };
 
-
 const getClient = async (req, res) => {
   try {
     const client = await Client.findOne({ 
       _id: req.params.id, 
-      user: req.user._id 
-    });
+      organization_id: req.user.organization_id._id 
+    })
+    .populate('created_by', 'name email')
+    .populate('modified_by', 'name email');
 
     if (!client) {
       return res.status(404).json({
@@ -77,21 +77,26 @@ const getClient = async (req, res) => {
   }
 };
 
-
 const createClient = async (req, res) => {
   try {
     const clientData = {
       ...req.body,
-      user: req.user._id
+      user: req.user._id,
+      organization_id: req.user.organization_id._id,
+      created_by: req.user._id
     };
 
     const client = new Client(clientData);
     await client.save();
 
+    const populatedClient = await Client.findById(client._id)
+      .populate('created_by', 'name email')
+      .populate('organization_id', 'name');
+
     res.status(201).json({
       success: true,
       message: 'Client created successfully',
-      data: { client }
+      data: { client: populatedClient }
     });
   } catch (error) {
     console.error('Create client error:', error);
@@ -111,14 +116,21 @@ const createClient = async (req, res) => {
   }
 };
 
-
 const updateClient = async (req, res) => {
   try {
     const client = await Client.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      req.body,
+      { 
+        _id: req.params.id, 
+        organization_id: req.user.organization_id._id 
+      },
+      {
+        ...req.body,
+        modified_by: req.user._id
+      },
       { new: true, runValidators: true }
-    );
+    )
+    .populate('created_by', 'name email')
+    .populate('modified_by', 'name email');
 
     if (!client) {
       return res.status(404).json({
@@ -142,18 +154,30 @@ const updateClient = async (req, res) => {
   }
 };
 
-
 const deleteClient = async (req, res) => {
   try {
     const client = await Client.findOneAndDelete({
       _id: req.params.id,
-      user: req.user._id
+      organization_id: req.user.organization_id._id
     });
 
     if (!client) {
       return res.status(404).json({
         success: false,
         message: 'Client not found'
+      });
+    }
+
+    const Quotation = require('../models/Quotation');
+    const quotationCount = await Quotation.countDocuments({ 
+      client: req.params.id,
+      organization_id: req.user.organization_id._id 
+    });
+
+    if (quotationCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete client with associated quotations. Please delete quotations first.'
       });
     }
 

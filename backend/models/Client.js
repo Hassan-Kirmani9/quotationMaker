@@ -47,13 +47,29 @@ const clientSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true}
+    required: true
+  },
+  organization_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: [true, 'Organization is required']
+  },
+  created_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Created by user is required']
+  },
+  modified_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 }, {
   timestamps: true
 });
 
-
 clientSchema.index({ user: 1});
 clientSchema.index({ email: 1 });
+clientSchema.index({ organization_id: 1 });
+clientSchema.index({ created_by: 1 });
 
 module.exports = mongoose.model('Client', clientSchema);
