@@ -4,7 +4,7 @@ import { Button } from '@windmill/react-ui'
 import { useAuth } from '../context/AuthContext'
 
 function AccessDenied() {
-  const { user, organization } = useAuth()
+  const { user, tenant } = useAuth()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 mx-auto">
@@ -32,10 +32,10 @@ function AccessDenied() {
           <p className="text-gray-500 dark:text-gray-400 mt-4 mb-2">
             You don't have permission to access this page.
           </p>
-          {user && organization && (
+          {user && tenant && (
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
               <p>User: <span className="font-medium">{user.name}</span></p>
-              <p>Organization: <span className="font-medium">{organization.name}</span></p>
+              <p>Tenant: <span className="font-medium">{tenant.name}</span></p>
               <p>Role: <span className="font-medium capitalize">{user.role}</span></p>
             </div>
           )}

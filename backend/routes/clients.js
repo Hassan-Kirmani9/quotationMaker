@@ -1,16 +1,14 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const clientController = require('../controllers/clientController');
-const authMiddleware = require('../middleware/authMiddleware');
+const clientController = require("../controllers/clientController");
+const { protect } = require("../middleware/authMiddleware");
 
+router.use(protect());
 
-router.use(authMiddleware);
-
-
-router.get('/', clientController.getClients);
-router.get('/:id', clientController.getClient);
-router.post('/', clientController.createClient);
-router.put('/:id', clientController.updateClient);
-router.delete('/:id', clientController.deleteClient);
+router.get("/", clientController.getClients);
+router.get("/:id", clientController.getClient);
+router.post("/", clientController.createClient);
+router.put("/:id", clientController.updateClient);
+router.delete("/:id", clientController.deleteClient);
 
 module.exports = router;

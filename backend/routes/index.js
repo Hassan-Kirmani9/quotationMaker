@@ -8,7 +8,7 @@
   const configurationRoutes = require('./configuration');
   const quotationRoutes = require('./quotations');
   const sizeRoutes = require('./size');
-  const organizationRoutes = require('./organization');
+  const tenantRoutes = require('./tenant');
 
   router.use('/auth', authRoutes);
   router.use('/clients', clientRoutes);
@@ -16,7 +16,7 @@
   router.use('/configuration', configurationRoutes);
   router.use('/quotations', quotationRoutes);
   router.use('/sizes', sizeRoutes);
-  router.use('/organizations', organizationRoutes);
+  router.use('/tenants', tenantRoutes);
 
 
   router.get('/', (req, res) => {

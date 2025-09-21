@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [config, setConfig] = useState(null)
   const [accessiblePages, setAccessiblePages] = useState([])
-  const [organization, setOrganization] = useState(null)
+  const [tenant, setTenant] = useState(null)
 
   const checkPageAccess = (pagePath) => {
     if (!user || !accessiblePages.length) return false
@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data.user
         setUser(userData)
         setAccessiblePages(userData.accessible_pages || [])
-        setOrganization({
-          id: userData.organization_id,
-          name: userData.organization_name
+        setTenant({
+          id: userData.tenant_id,
+          name: userData.tenant_name
         })
       }).catch((error) => {
         console.error('Auth check failed:', error)
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false)
         setUser(null)
         setAccessiblePages([])
-        setOrganization(null)
+        setTenant(null)
       })
     }
 
@@ -101,17 +101,17 @@ const login = async (token, userData) => {
     const fullUserData = response.data.user
     setUser(fullUserData)
     setAccessiblePages(fullUserData.accessible_pages || [])
-    setOrganization({
-      id: fullUserData.organization_id,
-      name: fullUserData.organization_name
+    setTenant({
+      id: fullUserData.tenant_id,
+      name: fullUserData.tenant_name
     })
   } catch (error) {
     console.error('Failed to fetch user profile after login:', error)
     setUser(userData)
     setAccessiblePages(userData.accessible_pages || [])
-    setOrganization({
-      id: userData.organization_id,
-      name: userData.organization_name
+    setTenant({
+      id: userData.tenant_id,
+      name: userData.tenant_name
     })
   }
 }
@@ -121,7 +121,7 @@ const login = async (token, userData) => {
     setIsAuthenticated(false)
     setUser(null)
     setAccessiblePages([])
-    setOrganization(null)
+    setTenant(null)
     setConfig(null)
   }
 
@@ -155,7 +155,7 @@ const login = async (token, userData) => {
     loading,
     config,
     accessiblePages,
-    organization,
+    tenant,
     checkPageAccess,
     getAllAvailablePages,
     updateUserPermissions

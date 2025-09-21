@@ -1,12 +1,14 @@
 const Product = require('../models/Product');
+const Size = require('../models/Size');
+const Quotation = require('../models/Quotation');
 
 const getProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
-    const organizationId = req.user.organization_id._id;
+    const tenantId = req.user.tenant_id._id;
 
-    const query = { organization_id: organizationId };
-    
+    const query = { tenant_id: tenantId };
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -16,8 +18,6 @@ const getProducts = async (req, res) => {
 
     const products = await Product.find(query)
       .populate('size', 'name')
-      .populate('created_by', 'name email')
-      .populate('modified_by', 'name email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -49,13 +49,11 @@ const getProducts = async (req, res) => {
 
 const getProduct = async (req, res) => {
   try {
-    const product = await Product.findOne({ 
-      _id: req.params.id, 
-      organization_id: req.user.organization_id._id 
+    const product = await Product.findOne({
+      _id: req.params.id,
+      tenant_id: req.user.tenant_id._id
     })
-    .populate('size', 'name')
-    .populate('created_by', 'name email')
-    .populate('modified_by', 'name email');
+      .populate('size', 'name')
 
     if (!product) {
       return res.status(404).json({
@@ -80,9 +78,8 @@ const getProduct = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const Size = require('../models/Size');
     const size = await Size.findById(req.body.size);
-    
+
     if (!size) {
       return res.status(400).json({
         success: false,
@@ -93,16 +90,14 @@ const createProduct = async (req, res) => {
     const productData = {
       ...req.body,
       user: req.user._id,
-      organization_id: req.user.organization_id._id,
-      created_by: req.user._id,
-      description: `${req.body.name} - ${size.name}` 
+      tenant_id: req.user.tenant_id._id,
+      description: `${req.body.name} - ${size.name}`
     };
 
     const product = new Product(productData);
     await product.save();
 
     await product.populate('size', 'name');
-    await product.populate('created_by', 'name email');
 
     res.status(201).json({
       success: true,
@@ -121,27 +116,25 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    let updateData = { 
-      ...req.body,
-      modified_by: req.user._id
+    let updateData = {
+      ...req.body
     };
-    
+
     if (req.body.size) {
-      const Size = require('../models/Size');
       const size = await Size.findById(req.body.size);
-      
+
       if (!size) {
         return res.status(400).json({
           success: false,
           message: 'Invalid size selected'
         });
       }
-      
+
       updateData.description = `${req.body.name} - ${size.name}`;
     } else if (req.body.name) {
-      const currentProduct = await Product.findOne({ 
-        _id: req.params.id, 
-        organization_id: req.user.organization_id._id 
+      const currentProduct = await Product.findOne({
+        _id: req.params.id,
+        tenant_id: req.user.tenant_id._id
       }).populate('size');
       if (currentProduct) {
         updateData.description = `${req.body.name} - ${currentProduct.size.name}`;
@@ -149,16 +142,14 @@ const updateProduct = async (req, res) => {
     }
 
     const product = await Product.findOneAndUpdate(
-      { 
-        _id: req.params.id, 
-        organization_id: req.user.organization_id._id 
+      {
+        _id: req.params.id,
+        tenant_id: req.user.tenant_id._id
       },
       updateData,
       { new: true, runValidators: true }
     )
-    .populate('size', 'name')
-    .populate('created_by', 'name email')
-    .populate('modified_by', 'name email');
+      .populate('size', 'name')
 
     if (!product) {
       return res.status(404).json({
@@ -186,7 +177,7 @@ const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({
       _id: req.params.id,
-      organization_id: req.user.organization_id._id
+      tenant_id: req.user.tenant_id._id
     });
 
     if (!product) {
@@ -196,10 +187,9 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    const Quotation = require('../models/Quotation');
-    const quotationCount = await Quotation.countDocuments({ 
+    const quotationCount = await Quotation.countDocuments({
       'items.product': req.params.id,
-      organization_id: req.user.organization_id._id 
+      tenant_id: req.user.tenant_id._id
     });
 
     if (quotationCount > 0) {

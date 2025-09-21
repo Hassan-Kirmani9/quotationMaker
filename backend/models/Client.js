@@ -3,73 +3,47 @@ const mongoose = require('mongoose');
 const clientSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Client name is required'],
-    trim: true,
-    maxlength: [100, 'Name cannot exceed 100 characters']
+    required: true
   },
   businessName: {
     type: String,
-    required: [true, 'Business name is required'],
-    trim: true,
-    maxlength: [150, 'Business name cannot exceed 150 characters']
+    required: true
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
-    trim: true,
-    lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    required: true
   },
   address: {
     type: String,
-    required: [true, 'Address is required'],
-    trim: true
+    required: true
   },
   mobileNo: {
     type: String,
-    required: [true, 'Mobile number is required'],
-    trim: true
+    required: true
   },
   businessNo: {
-    type: String,
-    trim: true
+    type: String
   },
   city: {
     type: String,
-    required: [true, 'City is required'],
-    trim: true
+    required: true
   },
   country: {
     type: String,
-    required: [true, 'Country is required'],
-    trim: true
+    required: true
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  organization_id: {
+  tenant_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
-    required: [true, 'Organization is required']
-  },
-  created_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Created by user is required']
-  },
-  modified_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Tenant',
+    required: true
   }
 }, {
   timestamps: true
 });
-
-clientSchema.index({ user: 1});
-clientSchema.index({ email: 1 });
-clientSchema.index({ organization_id: 1 });
-clientSchema.index({ created_by: 1 });
 
 module.exports = mongoose.model('Client', clientSchema);

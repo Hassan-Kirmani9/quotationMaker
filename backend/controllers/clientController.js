@@ -3,9 +3,9 @@ const Client = require('../models/Client');
 const getClients = async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
-    const organizationId = req.user.organization_id._id;
+    const tenantId = req.user.tenant_id._id;
 
-    const query = { organization_id: organizationId };
+    const query = { tenant_id: tenantId };
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -16,8 +16,6 @@ const getClients = async (req, res) => {
     }
 
     const clients = await Client.find(query)
-      .populate('created_by', 'name email')
-      .populate('modified_by', 'name email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -49,12 +47,10 @@ const getClients = async (req, res) => {
 
 const getClient = async (req, res) => {
   try {
-    const client = await Client.findOne({ 
-      _id: req.params.id, 
-      organization_id: req.user.organization_id._id 
+    const client = await Client.findOne({
+      _id: req.params.id,
+      tenant_id: req.user.tenant_id._id
     })
-    .populate('created_by', 'name email')
-    .populate('modified_by', 'name email');
 
     if (!client) {
       return res.status(404).json({
@@ -82,16 +78,14 @@ const createClient = async (req, res) => {
     const clientData = {
       ...req.body,
       user: req.user._id,
-      organization_id: req.user.organization_id._id,
-      created_by: req.user._id
+      tenant_id: req.user.tenant_id._id,
     };
 
     const client = new Client(clientData);
     await client.save();
 
     const populatedClient = await Client.findById(client._id)
-      .populate('created_by', 'name email')
-      .populate('organization_id', 'name');
+      .populate('tenant_id', 'name');
 
     res.status(201).json({
       success: true,
@@ -100,14 +94,14 @@ const createClient = async (req, res) => {
     });
   } catch (error) {
     console.error('Create client error:', error);
-    
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         message: 'Client with this email already exists'
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Error creating client',
@@ -119,18 +113,15 @@ const createClient = async (req, res) => {
 const updateClient = async (req, res) => {
   try {
     const client = await Client.findOneAndUpdate(
-      { 
-        _id: req.params.id, 
-        organization_id: req.user.organization_id._id 
+      {
+        _id: req.params.id,
+        tenant_id: req.user.tenant_id._id
       },
       {
-        ...req.body,
-        modified_by: req.user._id
+        ...req.body
       },
       { new: true, runValidators: true }
     )
-    .populate('created_by', 'name email')
-    .populate('modified_by', 'name email');
 
     if (!client) {
       return res.status(404).json({
@@ -158,7 +149,7 @@ const deleteClient = async (req, res) => {
   try {
     const client = await Client.findOneAndDelete({
       _id: req.params.id,
-      organization_id: req.user.organization_id._id
+      tenant_id: req.user.tenant_id._id
     });
 
     if (!client) {
@@ -169,9 +160,9 @@ const deleteClient = async (req, res) => {
     }
 
     const Quotation = require('../models/Quotation');
-    const quotationCount = await Quotation.countDocuments({ 
+    const quotationCount = await Quotation.countDocuments({
       client: req.params.id,
-      organization_id: req.user.organization_id._id 
+      tenant_id: req.user.tenant_id._id
     });
 
     if (quotationCount > 0) {

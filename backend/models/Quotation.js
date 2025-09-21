@@ -7,58 +7,44 @@ const quotationItemSchema = new mongoose.Schema({
     required: true
   },
   description: {
-    type: String,
-    trim: true
+    type: String
   },
   quantity: {
     type: Number,
-    required: true,
-    min: [0.01, 'Quantity must be greater than 0'],
-    default: 1
+    required: true
   },
   unitPrice: {
     type: Number,
-    required: true,
-    min: [0, 'Unit price cannot be negative']
+    required: true
   },
   discountValue: {
-    type: Number,
-    min: [0, 'Discount cannot be negative'],
-    max: [100, 'Discount cannot exceed 100%'],
-    default: 0
+    type: Number
   },
   totalPrice: {
     type: Number,
-    required: true,
-    min: [0, 'Total price cannot be negative']
+    required: true
   }
 });
 
 const quotationSchema = new mongoose.Schema({
   quotationNo: {
-    type: String,
-    trim: true
+    type: String
   },
   client: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Client',
-    required: [true, 'Client is required']
+    required: true
   },
   title: {
     type: String,
-    required: [true, 'Title is required'],
-    trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
+    required: true
   },
   description: {
-    type: String,
-    trim: true,
-    maxlength: [1000, 'Description cannot exceed 1000 characters']
+    type: String
   },
   date: {
     type: Date,
-    required: true,
-    default: Date.now
+    required: true
   },
   validUntil: {
     type: Date,
@@ -66,45 +52,28 @@ const quotationSchema = new mongoose.Schema({
   },
   items: [quotationItemSchema],
   subtotal: {
-    type: Number,
-    min: [0, 'Subtotal cannot be negative'],
-    default: 0
+    type: Number
   },
   discountType: {
-    type: String,
-    enum: ['percentage'],
-    default: 'percentage'
+    type: String
   },
   discountValue: {
-    type: Number,
-    min: [0, 'Discount cannot be negative'],
-    default: 0
+    type: Number
   },
   discountAmount: {
-    type: Number,
-    min: [0, 'Discount amount cannot be negative'],
-    default: 0
+    type: Number
   },
   taxRate: {
-    type: Number,
-    min: [0, 'Tax rate cannot be negative'],
-    max: [100, 'Tax rate cannot exceed 100%'],
-    default: 0
+    type: Number
   },
   taxAmount: {
-    type: Number,
-    min: [0, 'Tax amount cannot be negative'],
-    default: 0
+    type: Number
   },
   totalAmount: {
-    type: Number,
-    min: [0, 'Total amount cannot be negative'],
-    default: 0,
+    type: Number
   },
   status: {
-    type: String,
-    enum: ['quotation', 'invoice'],
-    default: 'quotation'
+    type: String
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -114,47 +83,5 @@ const quotationSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-quotationSchema.pre('save', async function (next) {
-  if (this.isNew && !this.quotationNo) {
-    try {
-      const count = await mongoose.model('Quotation').countDocuments({
-        user: this.user,
-      });
-
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-
-      this.quotationNo = `QUO-${year}${month}-${String(count + 1).padStart(4, '0')}`;
-    } catch (error) {
-      return next(error);
-    }
-  }
-  next();
-});
-
-quotationSchema.pre('save', function (next) {
-  // Calculate item-level totals first
-  this.items.forEach(item => {
-    const subtotalBeforeDiscount = item.quantity * item.unitPrice;
-    const itemDiscountAmount = (subtotalBeforeDiscount * item.discountValue) / 100;
-    item.totalPrice = subtotalBeforeDiscount - itemDiscountAmount;
-  });
-
-  // Calculate quotation-level totals
-  this.subtotal = this.items.reduce((sum, item) => sum + item.totalPrice, 0);
-  this.discountAmount = (this.subtotal * this.discountValue) / 100;
-  const afterDiscount = this.subtotal - this.discountAmount;
-  this.taxAmount = (afterDiscount * this.taxRate) / 100;
-  this.totalAmount = afterDiscount + this.taxAmount;
-
-  next();
-});
-
-quotationSchema.index({ user: 1 });
-quotationSchema.index({ client: 1 });
-quotationSchema.index({ quotationNo: 1 });
-quotationSchema.index({ status: 1 });
-quotationSchema.index({ date: -1 });
 
 module.exports = mongoose.model('Quotation', quotationSchema);
