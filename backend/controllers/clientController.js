@@ -109,7 +109,7 @@ const remove = async (req, res) => {
       });
     }
 
-    await Client.findByIdAndDelete(req.params.id);
+    await Client.delete({ _id: req.params.id });
 
     res.json({
       success: true,

@@ -83,7 +83,7 @@ const remove = async (req, res) => {
     });
   }
 
-  await Product.findByIdAndDelete(req.params.id);
+  await Product.delete({ _id: req.params.id });
 
   res.json({
     success: true,

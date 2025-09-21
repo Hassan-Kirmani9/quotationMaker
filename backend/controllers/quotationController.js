@@ -113,20 +113,9 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const quotationId = req.params.id;
   const { items, discountValue, taxRate, ...otherUpdates } = req.body;
 
-  const quotation = await Quotation.findOne({
-    _id: quotationId,
-    user: req.user._id,
-  });
-
-  if (!quotation) {
-    return res.status(404).json({
-      success: false,
-      message: "Quotation not found",
-    });
-  }
+  const quotation = await Quotation.findById(req.params.id);
 
   if (items) {
     const processedItems = [];
@@ -156,7 +145,7 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  await Quotation.findByIdAndDelete(req.params.id);
+  await Quotation.delete({ _id: req.params.id });
 
   res.json({
     success: true,

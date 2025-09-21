@@ -64,7 +64,7 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  await Size.findByIdAndDelete(req.params.id);
+  await Size.delete({ _id: req.params.id });
 
   res.json({
     success: true,

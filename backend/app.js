@@ -47,7 +47,15 @@ app.use("/api/quotations", quotationRoutes);
 app.use("/api/sizes", sizeRoutes);
 app.use("/api/tenants", tenantRoutes);
 
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
 app.use((err, req, res, next) => {
+  console.error(`[${req.correlationId}]`, err);
   res.status(500).json({
     success: false,
     message: err.message || "Internal Server Error",

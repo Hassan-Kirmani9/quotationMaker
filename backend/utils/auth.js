@@ -10,7 +10,8 @@ const generateToken = (userId) => {
 const getAllAvailablePages = () => {
   return [
     "dashboard",
-    "quotations1",
+    "quotations",
+    "cateringQuotations",
     "clients",
     "products",
     "sizes",
