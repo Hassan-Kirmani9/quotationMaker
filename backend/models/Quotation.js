@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongooseDelete = require("mongoose-delete");
 
 const quotationItemSchema = new mongoose.Schema({
   product: {
@@ -21,6 +22,11 @@ const quotationItemSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+});
+
+quotationItemSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  overrideMethods: "all",
 });
 
 const quotationSchema = new mongoose.Schema(
@@ -90,5 +96,10 @@ const quotationSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+quotationSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  overrideMethods: "all",
+});
 
 module.exports = mongoose.model("Quotation", quotationSchema);

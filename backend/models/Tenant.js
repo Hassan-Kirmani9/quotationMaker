@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongooseDelete = require("mongoose-delete");
 
 const tenantSchema = new mongoose.Schema(
   {
@@ -18,5 +19,10 @@ const tenantSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+tenantSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  overrideMethods: "all",
+});
 
 module.exports = mongoose.model("Tenant", tenantSchema);
