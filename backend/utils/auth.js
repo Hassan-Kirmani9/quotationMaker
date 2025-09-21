@@ -9,12 +9,12 @@ const generateToken = (userId) => {
 
 const getAllAvailablePages = () => {
   return [
-    "/dashboard",
-    "/quotations",
-    "/clients",
-    "/products",
-    "/sizes",
-    "/configuration",
+    "dashboard",
+    "quotations1",
+    "clients",
+    "products",
+    "sizes",
+    "configuration",
   ];
 };
 

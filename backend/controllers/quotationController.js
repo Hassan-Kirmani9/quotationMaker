@@ -187,14 +187,13 @@ const generatePDF = async (req, res) => {
     });
 
   const configuration = await Configuration.findOne({ user: req.user._id });
-
   const pdfBuffer = await generatePDFBuffer(quotation, configuration);
 
-  res.setHeader("Content-Type", "application/pdf");
   const displayNumber =
     quotation.status === "invoice"
       ? quotation.quotationNo.replace(/^QUO-/, "INV-")
       : quotation.quotationNo;
+  res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename="${displayNumber}.pdf"`

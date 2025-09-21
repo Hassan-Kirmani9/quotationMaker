@@ -1,18 +1,22 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const tenantSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
+const tenantSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    configs: {
+      permissions: {
+        type: [String],
+        default: ["dashboard", "client", "configuration"],
+      },
+    },
   },
-  configs: {
-    permissions: [{
-      type: String
-    }]
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
-module.exports = mongoose.model('Tenant', tenantSchema);
+module.exports = mongoose.model("Tenant", tenantSchema);
