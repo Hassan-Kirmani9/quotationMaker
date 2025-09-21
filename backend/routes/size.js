@@ -1,22 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const {
-  getSizes,
-  getAllSizes,
-  getSize,
-  createSize,
-  updateSize,
-  deleteSize,
-} = require("../controllers/sizeController");
+const sizeController = require("../controllers/sizeController");
 const { protect } = require("../middleware/authMiddleware");
+const asyncHandler = require("../utils/asyncHandler");
 
 router.use(protect());
 
-router.get("/", getSizes);
-router.get("/all", getAllSizes);
-router.get("/:id", getSize);
-router.post("/", createSize);
-router.patch("/:id", updateSize);
-router.delete("/:id", deleteSize);
+router.get("/", asyncHandler(sizeController.listing));
+router.post("/", asyncHandler(sizeController.create));
+router.get("/:id", asyncHandler(sizeController.get));
+router.patch("/:id", asyncHandler(sizeController.update));
+router.delete("/:id", asyncHandler(sizeController.remove));
 
 module.exports = router;

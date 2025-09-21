@@ -1,12 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
+const authController = require("../controllers/authController");
+const { protect } = require("../middleware/authMiddleware");
+const asyncHandler = require("../utils/asyncHandler");
 
-router.post('/register', authController.registerUser);
-router.post('/login', authController.loginUser);
-router.get('/me', protect, authController.me);
-router.patch('/profile', protect, authController.updateProfile);
-router.patch('/change-password', protect, authController.changePassword);
+router.post("/register", asyncHandler(authController.registerUser));
+router.post("/login", asyncHandler(authController.loginUser));
+router.get("/me", protect(), asyncHandler(authController.me));
+router.patch("/profile", protect(), asyncHandler(authController.updateProfile));
+router.patch("/change-password", protect(), asyncHandler(authController.changePassword));
 
 module.exports = router;

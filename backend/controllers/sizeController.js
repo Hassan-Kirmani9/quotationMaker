@@ -1,141 +1,81 @@
 const Size = require("../models/Size");
 
-const getSizes = async (req, res) => {
-  try {
-    const { page = 1, limit = 50, search } = req.query;
-    const userId = req.user._id;
+const listing = async (req, res) => {
+  const { page = 1, limit = 50, search } = req.query;
 
-    const query = { user: userId };
+  const query = { user: req.user._id };
 
-    if (search) {
-      query.name = { $regex: search, $options: "i" };
-    }
+  if (search) {
+    query.name = { $regex: search, $options: "i" };
+  }
 
-    const sizes = await Size.find(query)
-      .sort({ name: 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
+  const sizes = await Size.find(query)
+    .sort({ name: 1 })
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .exec();
 
-    const total = await Size.countDocuments(query);
+  const total = await Size.countDocuments(query);
 
-    res.json({
-      success: true,
-      data: {
-        sizes,
-        pagination: {
-          current: Number(page),
-          pages: Math.ceil(total / limit),
-          total,
-          limit: Number(limit),
-        },
+  res.json({
+    success: true,
+    data: {
+      sizes,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: Number(limit),
       },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching sizes",
-      error: error?.message || "Server Error",
-    });
-  }
+    },
+  });
 };
 
-const getAllSizes = async (req, res) => {
-  try {
-    const sizes = await Size.find({ user: req.user._id }).sort({ name: 1 });
+const get = async (req, res) => {
+  const size = await Size.findById(req.params.id);
 
-    res.json({
-      success: true,
-      data: sizes,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching sizes",
-      error: error?.message || "Server Error",
-    });
-  }
+  res.json({
+    success: true,
+    data: size,
+  });
 };
 
-const getSize = async (req, res) => {
-  try {
-    const size = await Size.findById(req.params.id);
+const create = async (req, res) => {
+  const size = new Size({
+    name: req.body.name,
+    user: req.user._id,
+    tenant: req.user.tenant,
+  });
+  await size.save();
 
-    res.json({
-      success: true,
-      data: size,
-    });
-  } catch (error) {
-    console.error("Get size error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching size",
-      error: error.message,
-    });
-  }
+  res.status(201).json({
+    success: true,
+    message: "Size created successfully",
+  });
 };
 
-const createSize = async (req, res) => {
-  try {
-    const size = new Size({
-      name: req.body["name"],
-      user: req.user._id,
-      tenant: req.user.tenant,
-    });
-    await size.save();
+const update = async (req, res) => {
+  await Size.findByIdAndUpdate(req.params.id, req.body);
 
-    res.status(201).json({
-      success: true,
-      message: "Size created successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error creating size",
-      error: error?.message || "Server Error",
-    });
-  }
+  res.json({
+    success: true,
+    message: "Size updated successfully",
+  });
 };
 
-const updateSize = async (req, res) => {
-  try {
-    await Size.findByIdAndUpdate(req.user.id, req.body);
+const remove = async (req, res) => {
+  await Size.findByIdAndDelete(req.params.id);
 
-    res.json({
-      success: true,
-      message: "Size updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error updating size",
-      error: error?.message || "Server Error",
-    });
-  }
-};
-
-const deleteSize = async (req, res) => {
-  try {
-    await Size.findByIdAndDelete(req.user.id);
-
-    res.json({
-      success: true,
-      message: "Size deleted successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting size",
-      error: error?.message || "Server Error",
-    });
-  }
+  res.json({
+    success: true,
+    message: "Size deleted successfully",
+  });
 };
 
 module.exports = {
-  getSizes,
-  getAllSizes,
-  getSize,
-  createSize,
-  updateSize,
-  deleteSize,
+  listing,
+  get,
+  create,
+  update,
+  remove,
 };

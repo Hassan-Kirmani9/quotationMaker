@@ -5,9 +5,6 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  description: {
-    type: String
-  },
   sellingPrice: {
     type: Number,
     required: true
@@ -26,7 +23,7 @@ const productSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  tenant_id: {
+  tenant: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tenant',
     required: true

@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const tenantController = require("../controllers/tenantController");
+const dashboardController = require("../controllers/dashboardController");
 const { protect } = require("../middleware/authMiddleware");
 const asyncHandler = require("../utils/asyncHandler");
 
-router.post("/", protect("admin"), asyncHandler(tenantController.createTenant));
+router.use(protect());
+
+router.get("/stats", asyncHandler(dashboardController.stats));
 
 module.exports = router;

@@ -1,4 +1,6 @@
-1) do we need getAll API or just pagination API or both or one
-2) filter by userid or tenant
-3) add userid and tenant on each models and endpoints
+1) never getAll, just pagination => done
+2) filter by userid => done
+3) add userid and tenant on each models and endpoints => done
 4) groupby pages by name and only those render which have permissions array from backend
+5) for get quoation, create 2 seperate endpoints one to get quotation by id and one to get quotationItems by id
+6) validity

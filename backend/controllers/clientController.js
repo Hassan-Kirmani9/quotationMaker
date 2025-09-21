@@ -1,17 +1,17 @@
-const Client = require('../models/Client');
+const Client = require("../models/Client");
+const Quotation = require("../models/Quotation");
 
-const getClients = async (req, res) => {
+const listing = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search } = req.query;
-    const tenantId = req.user.tenant_id._id;
+    const { page = 1, limit = 50, search } = req.query;
 
-    const query = { tenant_id: tenantId };
+    const query = { user: req.user._id };
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { businessName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { city: { $regex: search, $options: 'i' } }
+        { name: { $regex: search, $options: "i" } },
+        { businessName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { city: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -31,165 +31,103 @@ const getClients = async (req, res) => {
           current: Number(page),
           pages: Math.ceil(total / limit),
           total,
-          limit: Number(limit)
-        }
-      }
+          limit: Number(limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Get clients error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching clients',
-      error: error.message
+      message: "Error fetching clients",
+      error: error?.message || "Server Error",
     });
   }
 };
 
-const getClient = async (req, res) => {
+const get = async (req, res) => {
   try {
-    const client = await Client.findOne({
-      _id: req.params.id,
-      tenant_id: req.user.tenant_id._id
-    })
+    const client = await Client.findById(req.params.id);
 
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        message: 'Client not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: { client }
-    });
+    res.json({ success: true, data: client });
   } catch (error) {
-    console.error('Get client error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching client',
-      error: error.message
+      message: "Error fetching client",
+      error: error?.message || "Server Error",
     });
   }
 };
 
-const createClient = async (req, res) => {
+const create = async (req, res) => {
   try {
     const clientData = {
       ...req.body,
       user: req.user._id,
-      tenant_id: req.user.tenant_id._id,
+      tenant: req.user.tenant,
     };
 
     const client = new Client(clientData);
     await client.save();
 
-    const populatedClient = await Client.findById(client._id)
-      .populate('tenant_id', 'name');
-
-    res.status(201).json({
-      success: true,
-      message: 'Client created successfully',
-      data: { client: populatedClient }
-    });
+    res.json({ success: true, message: "Client created successfully" });
   } catch (error) {
-    console.error('Create client error:', error);
-
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'Client with this email already exists'
-      });
-    }
-
     res.status(500).json({
       success: false,
-      message: 'Error creating client',
-      error: error.message
+      message: "Error creating client",
+      error: error?.message || "Server Error",
     });
   }
 };
 
-const updateClient = async (req, res) => {
+const update = async (req, res) => {
   try {
-    const client = await Client.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        tenant_id: req.user.tenant_id._id
-      },
-      {
-        ...req.body
-      },
-      { new: true, runValidators: true }
-    )
-
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        message: 'Client not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Client updated successfully',
-      data: { client }
+    await Client.findByIdAndUpdate(req.params.id, {
+      ...req.body,
     });
+
+    res.json({ success: true, message: "Client updated successfully" });
   } catch (error) {
-    console.error('Update client error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating client',
-      error: error.message
+      message: "Error updating client",
+      error: error?.message || "Server Error",
     });
   }
 };
 
-const deleteClient = async (req, res) => {
+const remove = async (req, res) => {
   try {
-    const client = await Client.findOneAndDelete({
-      _id: req.params.id,
-      tenant_id: req.user.tenant_id._id
-    });
-
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        message: 'Client not found'
-      });
-    }
-
-    const Quotation = require('../models/Quotation');
     const quotationCount = await Quotation.countDocuments({
       client: req.params.id,
-      tenant_id: req.user.tenant_id._id
     });
 
     if (quotationCount > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete client with associated quotations. Please delete quotations first.'
+        message:
+          "Cannot delete client with associated quotations. Please delete quotations first.",
       });
     }
 
+    await Client.findByIdAndDelete(req.params.id);
+
     res.json({
       success: true,
-      message: 'Client deleted successfully'
+      message: "Client deleted successfully",
     });
   } catch (error) {
-    console.error('Delete client error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error deleting client',
-      error: error.message
+      message: "Error deleting client",
+      error: error?.message || "Server Error",
     });
   }
 };
 
 module.exports = {
-  getClients,
-  getClient,
-  createClient,
-  updateClient,
-  deleteClient
+  listing,
+  get,
+  create,
+  update,
+  remove,
 };

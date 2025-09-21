@@ -37,7 +37,7 @@ const clientSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  tenant_id: {
+  tenant: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tenant',
     required: true

@@ -5,10 +5,10 @@ const { protect } = require("../middleware/authMiddleware");
 
 router.use(protect());
 
-router.get("/", clientController.getClients);
-router.get("/:id", clientController.getClient);
-router.post("/", clientController.createClient);
-router.put("/:id", clientController.updateClient);
-router.delete("/:id", clientController.deleteClient);
+router.get("/", clientController.listing);
+router.get("/:id", clientController.get);
+router.post("/", clientController.create);
+router.patch("/:id", clientController.update);
+router.delete("/:id", clientController.remove);
 
 module.exports = router;
