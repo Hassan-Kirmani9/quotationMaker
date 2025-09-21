@@ -4,3 +4,6 @@
 4) groupby pages by name and only those render which have permissions array from backend
 5) for get quoation, create 2 seperate endpoints one to get quotation by id and one to get quotationItems by id
 6) validity
+7) added mongoose-delete plugin
+8) check mongoose-pagingate plugin if you think its of any use - first tell me
+9) using node v22

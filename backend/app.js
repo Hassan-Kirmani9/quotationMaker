@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const { v4: uuidv4 } = require("uuid");
 
 const authRoutes = require("./routes/auth");
 const clientRoutes = require("./routes/clients");
@@ -28,6 +29,13 @@ app.get("/health", (req, res) => {
     message: "Quotation Maker API is running!",
     timestamp: new Date().toISOString(),
   });
+});
+
+app.use((req, res, next) => {
+  const correlationId = req.headers["x-correlation-id"] || uuidv4();
+  req.correlationId = correlationId;
+  res.setHeader("x-correlation-id", correlationId);
+  next();
 });
 
 app.use("/api/auth", authRoutes);

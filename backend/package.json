@@ -26,7 +26,8 @@
     "mongoose": "^8.18.1",
     "mongoose-delete": "^1.0.2",
     "multer": "^2.0.2",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
