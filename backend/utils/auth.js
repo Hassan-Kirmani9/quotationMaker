@@ -7,6 +7,16 @@ const generateToken = (userId) => {
   });
 };
 
+const verifyToken = (token) => {
+  try {
+    const access_token = token.replace("Bearer ", "");
+    decoded = jwt.verify(access_token, process.env.JWT_SECRET);
+    return decoded;
+  } catch {
+    return false;
+  }
+};
+
 const getAllAvailablePages = () => {
   return [
     "dashboard",
@@ -33,4 +43,5 @@ const generateUserPermissions = async (id, role) => {
 module.exports = {
   generateToken,
   generateUserPermissions,
+  verifyToken,
 };

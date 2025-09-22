@@ -1,9 +1,8 @@
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { verifyToken } = require("../utils/auth");
 
-const protect =
-  (roles = []) =>
-  async (req, res, next) => {
+
+const protect = (roles = []) => async (req, res, next) => {
     try {
       const authHeader = req.header("Authorization");
       if (!authHeader?.startsWith("Bearer ")) {
@@ -13,18 +12,17 @@ const protect =
         });
       }
 
-      const token = authHeader.replace("Bearer ", "");
-      let decoded;
-      try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
-      } catch {
+      let decoded = verifyToken(authHeader);
+      if (decoded == false) {
         return res.status(401).json({
           success: false,
           message: "Invalid or expired token.",
         });
       }
 
-      const user = await User.findById(decoded.userId).select("role isActive tenant");
+      const user = await User.findById(decoded.userId).select(
+        "role isActive tenant"
+      );
       if (!user) {
         return res.status(401).json({
           success: false,
