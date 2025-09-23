@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { get, put, uploadFile } from '../../api/axios';
+import { get, patch } from '../../api/axios';
 import {
   Button, Label, Input, HelperText, Select
 } from '@windmill/react-ui';
@@ -24,7 +24,7 @@ function Configuration() {
     taxId: '',
     validity: 30,
     terms: '',
-    quotationPrefix: 'QUO',
+    prefix: 'QUO',
     invoicePrefix: 'INV', currency: 'USD'
   });
   const [loading, setLoading] = useState(true);
@@ -35,21 +35,9 @@ function Configuration() {
   const getImageUrl = (logoPath) => {
     if (!logoPath) return '';
     if (logoPath.startsWith('data:image/')) return logoPath;
-    if (logoPath.startsWith('http')) return logoPath; 
-    return `http://localhost:5000${logoPath}`; 
+    if (logoPath.startsWith('http')) return logoPath;
+    return `http://localhost:5000${logoPath}`;
   };
-  const currencies = [
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' }
-  ];
 
   useEffect(() => {
     async function fetchConfig() {
@@ -57,7 +45,7 @@ function Configuration() {
       try {
         const res = await get('/configuration');
         if (res.success) {
-          const c = res.data.configuration;
+          const c = res.data;
           setConfig(c);
           setForm({
             bankName: c.bank?.name || '',
@@ -72,8 +60,9 @@ function Configuration() {
             taxId: c.business?.taxId || '',
             validity: c.quotation?.validity || 30,
             terms: c.quotation?.terms || '',
-            quotationPrefix: c.quotation?.quotationPrefix || 'QUO',
-            invoicePrefix: c.quotation?.invoicePrefix || 'INV', currency: c.quotation?.currency || c.business?.currency
+            prefix: c.quotation?.prefix || 'QUO',
+            invoicePrefix: c.quotation?.invoicePrefix || 'INV',
+            currency: c.business?.currency || c.quotation?.currency
           });
           setLogoPreview(c.business?.logo || '');
         }
@@ -97,7 +86,7 @@ function Configuration() {
   const handleLogoUpload = e => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { 
+      if (file.size > 5 * 1024 * 1024) {
         setError('Logo file size should be less than 5MB');
         return;
       }
@@ -131,7 +120,7 @@ function Configuration() {
             reader.readAsDataURL(logoFile);
           });
 
-          const uploadData = await put('/configuration/upload-logo', { logoBase64: base64 });
+          const uploadData = await patch('/configuration/upload-logo', { logoBase64: base64 });
 
           if (uploadData.success) {
             logoUrl = uploadData.logoUrl;
@@ -164,12 +153,12 @@ function Configuration() {
         quotation: {
           validity: Number(form.validity),
           terms: form.terms,
-          quotationPrefix: form.quotationPrefix,
+          prefix: form.prefix,
           invoicePrefix: form.invoicePrefix, currency: form.currency
         }
       };
 
-      const res = await put('/configuration', payload);
+      const res = await patch('/configuration', payload);
       if (res.success) {
         setConfig(res.data.configuration);
         alert('Configuration saved successfully');
@@ -329,7 +318,7 @@ function Configuration() {
           </Label>
           <Label>
             <span>Quotation Prefix</span>
-            <Input name="quotationPrefix" value={form.quotationPrefix} onChange={handleChange} />
+            <Input name="prefix" value={form.prefix} onChange={handleChange} />
             <HelperText>Prefix for quotation numbers (e.g., QUO-202409-0001)</HelperText>
           </Label>
           <Label>

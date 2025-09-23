@@ -25,6 +25,10 @@ const Quotations = lazy(() => import('../pages/Quotations/Quotations'))
 const CreateQuotations = lazy(() => import('../pages/Quotations/CreateQuotations'))
 const ViewQuotations = lazy(() => import('../pages/Quotations/ViewQuotations'))
 const EditQuotations = lazy(() => import('../pages/Quotations/EditQuotations'))
+const CateringQuotations = lazy(() => import('../pages/CateringQuotations/CateringQuotations'))
+const CreateCateringQuotations = lazy(() => import('../pages/CateringQuotations/CreateCateringQuotations'))
+const EditCateringQuotations = lazy(() => import('../pages/CateringQuotations/EditCateringQuotations'))
+const ViewCateringQuotations = lazy(() => import('../pages/CateringQuotations/ViewCateringQuotations'))
 
 const Blank = lazy(() => import('../pages/Blank'))
 
@@ -32,112 +36,132 @@ const routes = [
   {
     path: '/dashboard',
     component: Dashboard,
-    requiredPage: '/dashboard'
+    name: '/dashboard'
   },
   {
     path: '/clients',
     component: Clients,
-    requiredPage: '/clients'
+    name: '/clients'
   },
   {
     path: '/clients/create',
     component: CreateClients,
-    requiredPage: '/clients'
+    name: '/clients'
   },
   {
     path: '/clients/edit/:id',
     component: EditClient,
-    requiredPage: '/clients'
+    name: '/clients'
   },
   {
     path: '/products',
     component: Products,
-    requiredPage: '/products'
+    name: '/products'
   },
   {
     path: '/products/create',
     component: CreateProducts,
-    requiredPage: '/products'
+    name: '/products'
   },
   {
     path: '/projects/edit/:id',
     component: EditProjects,
-    requiredPage: '/products'
+    name: '/products'
   },
   {
     path: '/quotations',
     component: Quotations,
-    requiredPage: '/quotations'
+    name: '/quotations'
   },
   {
     path: '/sizes',
     component: Size,
-    requiredPage: '/sizes'
+    name: '/sizes'
   },
   {
     path: '/quotations/create',
     component: CreateQuotations,
-    requiredPage: '/quotations'
+    name: '/quotations'
   },
   {
     path: '/quotations/edit/:id',
     component: EditQuotations,
-    requiredPage: '/quotations'
+    name: '/quotations'
   },
   {
     path: '/quotations/view/:id',
     component: ViewQuotations,
-    requiredPage: '/quotations'
+    name: '/quotations'
+  },
+  {
+    path: '/catering-quotations',
+    component: CateringQuotations,
+    name: 'cateringQuotations'
+  },
+  {
+    path: '/catering-quotations/create',
+    component: CreateCateringQuotations,
+    name: 'cateringQuotations'
+  },
+  {
+    path: '/catering-quotations/edit/:id',
+    component: EditCateringQuotations,
+    name: 'cateringQuotations'
+  },
+  {
+    path: '/catering-quotations/view/:id',
+    component: ViewCateringQuotations,
+    name: 'cateringQuotations'
   },
   {
     path: '/forms',
     component: Forms,
-    requiredPage: null
+    name: null
   },
   {
     path: '/cards',
     component: Cards,
-    requiredPage: null
+    name: null
   },
   {
     path: '/charts',
     component: Charts,
-    requiredPage: null
+    name: null
   },
   {
     path: '/buttons',
     component: Buttons,
-    requiredPage: null
+    name: null
   },
   {
     path: '/modals',
     component: Modals,
-    requiredPage: null
+    name: null
   },
   {
     path: '/tables',
     component: Tables,
-    requiredPage: null
+    name: null
   },
   {
     path: '/404',
     component: Page404,
-    requiredPage: null
+    name: null
   },
   {
     path: '/blank',
     component: Blank,
-    requiredPage: null
+    name: null
   },
   {
     path: '/configuration',
     component: Configuration,
-    requiredPage: '/configuration'
+    name: '/configuration'
   },
   {
     path: '/configuration/create',
     component: CreateConfiguration,
-    requiredPage: '/configuration'
+    name: '/configuration'
   }
 ]
 

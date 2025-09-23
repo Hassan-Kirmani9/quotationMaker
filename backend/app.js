@@ -1,7 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { v4: uuidv4 } = require("uuid");
+
+let uuidv4;
+(async () => {
+  const { v4 } = await import("uuid");
+  uuidv4 = v4;
+})();
 
 const authRoutes = require("./routes/auth");
 const clientRoutes = require("./routes/clients");
@@ -11,6 +16,7 @@ const quotationRoutes = require("./routes/quotations");
 const sizeRoutes = require("./routes/size");
 const tenantRoutes = require("./routes/tenant");
 const dashboardRoutes = require("./routes/dashboard");
+const cateringQuotationRoutes = require("./routes/cateringQuotations");
 
 app.use(
   cors({
@@ -32,7 +38,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use((req, res, next) => {
-  const correlationId = req.headers["x-correlation-id"] || uuidv4();
+  const correlationId = req.headers["x-correlation-id"] || (uuidv4 ? uuidv4() : Math.random().toString(36));
   req.correlationId = correlationId;
   res.setHeader("x-correlation-id", correlationId);
   next();
@@ -44,6 +50,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/configuration", configurationRoutes);
 app.use("/api/quotations", quotationRoutes);
+app.use('/api/catering-quotations', cateringQuotationRoutes);
 app.use("/api/sizes", sizeRoutes);
 app.use("/api/tenants", tenantRoutes);
 

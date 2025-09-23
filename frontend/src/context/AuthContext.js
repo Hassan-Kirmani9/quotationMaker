@@ -13,16 +13,17 @@ export const AuthProvider = ({ children }) => {
   const [accessiblePages, setAccessiblePages] = useState([])
   const [tenant, setTenant] = useState(null)
 
-  const checkPageAccess = (pagePath) => {
-    if (!user || !accessiblePages.length) return false
+  const checkPageAccess = (permissionName) => {
+    if (!user || !user.permissions) return false
     if (user.role === 'admin') return true
-    return accessiblePages.includes(pagePath)
+    return user.permissions.includes(permissionName)
   }
 
   const getAllAvailablePages = () => {
     return [
       "/dashboard",
-      "/quotations", 
+      "/quotations",
+      "/cateringQuotations",
       "/clients",
       "/products",
       "/sizes",
@@ -39,13 +40,18 @@ export const AuthProvider = ({ children }) => {
           Authorization: `Bearer ${token}`
         }
       }).then(response => {
-        const userData = response.data.user
-        setUser(userData)
-        setAccessiblePages(userData.accessible_pages || [])
-        setTenant({
-          id: userData.tenant_id,
-          name: userData.tenant_name
-        })
+        // Correct structure: user data is directly in response.data
+        if (response && response.data) {
+          const userData = response.data
+          setUser(userData)
+
+          // Use permissions from backend (already includes / prefix from backend)
+
+          setTenant({
+            id: userData.organization_id || userData.tenant_id,
+            name: userData.organization_name || userData.tenant_name
+          })
+        }
       }).catch((error) => {
         console.error('Auth check failed:', error)
         localStorage.removeItem('token')
@@ -56,6 +62,7 @@ export const AuthProvider = ({ children }) => {
       })
     }
 
+    // Rest of the useEffect remains the same...
     const fetchConfig = async () => {
       if (token) {
         try {
@@ -79,7 +86,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     window.addEventListener('currencyUpdated', handleConfigUpdate)
-
     setLoading(false)
 
     return () => {
@@ -87,35 +93,36 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-const login = async (token, userData) => {
-  localStorage.setItem('token', token)
-  setIsAuthenticated(true)
-  
-  try {
-    const response = await get('/auth/me', {}, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    
-    const fullUserData = response.data.user
-    setUser(fullUserData)
-    setAccessiblePages(fullUserData.accessible_pages || [])
-    setTenant({
-      id: fullUserData.tenant_id,
-      name: fullUserData.tenant_name
-    })
-  } catch (error) {
-    console.error('Failed to fetch user profile after login:', error)
-    setUser(userData)
-    setAccessiblePages(userData.accessible_pages || [])
-    setTenant({
-      id: userData.tenant_id,
-      name: userData.tenant_name
-    })
-  }
-}
+  const login = async (token, userData) => {
+    localStorage.setItem('token', token)
+    setIsAuthenticated(true)
 
+    try {
+      const response = await get('/auth/me', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (response && response.data) {
+        const fullUserData = response.data
+        setUser(fullUserData)
+
+        // Use permissions from backend
+        const accessiblePages = fullUserData.permissions?.map(p => `/${p}`) || []
+        setAccessiblePages(accessiblePages)
+
+        setTenant({
+          id: fullUserData.organization_id || fullUserData.tenant_id,
+          name: fullUserData.organization_name || fullUserData.tenant_name
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile after login:', error)
+      setUser(userData || {})
+      setAccessiblePages(["/dashboard", "/quotations", "/clients", "/products", "/sizes", "/configuration"])
+      setTenant(null)
+    }
+  }
   const logout = () => {
     localStorage.removeItem('token')
     setIsAuthenticated(false)
@@ -123,28 +130,6 @@ const login = async (token, userData) => {
     setAccessiblePages([])
     setTenant(null)
     setConfig(null)
-  }
-
-  const updateUserPermissions = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (token) {
-        const response = await get('/auth/permissions', {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
-        const userData = response.data.user
-        const permissions = response.data.permissions
-        
-        setUser(prevUser => ({
-          ...prevUser,
-          ...userData
-        }))
-        setAccessiblePages(permissions.accessible_pages || [])
-      }
-    } catch (error) {
-      console.error('Failed to update user permissions:', error)
-    }
   }
 
   const contextValue = {
@@ -158,7 +143,6 @@ const login = async (token, userData) => {
     tenant,
     checkPageAccess,
     getAllAvailablePages,
-    updateUserPermissions
   }
 
   return (

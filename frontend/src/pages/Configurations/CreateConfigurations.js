@@ -29,7 +29,7 @@ function CreateConfiguration() {
       validity: 30,
       terms: '',
       notes: '',
-      quotationPrefix: 'QUO',
+      prefix: 'QUO',
       invoicePrefix: 'INV'
     }
   })
@@ -62,7 +62,7 @@ function CreateConfiguration() {
   const validateForm = () => {
     const newErrors = {}
     requiredFields = {
-      quotation: ['validity', 'quotationPrefix', 'invoicePrefix']
+      quotation: ['validity', 'prefix', 'invoicePrefix']
     }
 
     Object.entries(requiredFields).forEach(([section, fields]) => {
@@ -210,8 +210,8 @@ function CreateConfiguration() {
             </Label>
             <Label>
               <span>Quotation Prefix *</span>
-              <Input name="quotation.quotationPrefix" value={form.quotation.quotationPrefix} onChange={handleChange} valid={!errors.quotation?.quotationPrefix} />
-              {errors.quotation?.quotationPrefix && <HelperText valid={false}>{errors.quotation.quotationPrefix}</HelperText>}
+              <Input name="quotation.prefix" value={form.quotation.prefix} onChange={handleChange} valid={!errors.quotation?.prefix} />
+              {errors.quotation?.prefix && <HelperText valid={false}>{errors.quotation.prefix}</HelperText>}
             </Label>
             <Label>
               <span>Invoice Prefix *</span>

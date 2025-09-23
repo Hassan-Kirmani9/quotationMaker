@@ -1,6 +1,6 @@
 const Quotation = require("../models/Quotation");
 const Configuration = require("../models/Configuration");
-const generatePDFBuffer = require("../utils/pdfGenerator");
+const { generatePDFBuffer } = require("../utils/pdfGenerator");
 
 const listing = async (req, res) => {
   const { page = 1, limit = 10, search, status, client } = req.query;
@@ -19,6 +19,7 @@ const listing = async (req, res) => {
 
   const quotations = await Quotation.find(query)
     .populate("client", "name")
+    .select("-items")
     .limit(limit * 1)
     .skip((page - 1) * limit);
 
@@ -37,13 +38,36 @@ const listing = async (req, res) => {
     },
   });
 };
-
 const get = async (req, res) => {
-  const quotation = await Quotation.findById(req.params.id).populate("client");
+  const quotation = await Quotation.findById(req.params.id)
+    .populate("client")
+    .select("-items");
 
   res.json({
     success: true,
     data: quotation,
+  });
+};
+
+const getQuotationItems = async (req, res) => {
+  const quotation = await Quotation.findById(req.params.id)
+    .populate({
+      path: "items.product",
+      select: "name unit size",
+      populate: { path: "size", select: "name" },
+    })
+    .select("items");
+
+  if (!quotation) {
+    return res.status(404).json({
+      success: false,
+      message: "Quotation not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: quotation.items,
   });
 };
 
@@ -55,6 +79,7 @@ const create = async (req, res) => {
     items,
     discountValue,
     taxRate,
+    date,
     currency,
   } = req.body;
 
@@ -84,24 +109,49 @@ const create = async (req, res) => {
   }
 
   const config = await Configuration.findOne({ user: req.user._id });
-  const validityDays = config?.quotation?.validity;
-  const validUntil = new Date();
-  validUntil.setDate(validUntil.getDate() + validityDays);
   const defaultCurrency = config?.quotation?.currency;
+  const subtotal = processedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const discountAmount = (subtotal * (discountValue || 0)) / 100;
+  const afterDiscount = subtotal - discountAmount;
+  const taxAmount = (afterDiscount * (taxRate || 0)) / 100;
+  const totalAmount = afterDiscount + taxAmount;
 
   const quotationData = {
     client,
     title,
     description,
+    date: date || new Date(),
     items: processedItems,
-    validUntil,
+    validUntil: req.body.validUntil,
     discountType: "percentage",
     discountValue: discountValue || 0,
     taxRate: taxRate || 0,
     currency: currency || defaultCurrency,
+    subtotal,
+    discountAmount,
+    taxAmount,
+    totalAmount,
     user: req.user._id,
     tenant: req.user.tenant,
   };
+
+  if (!req.body.validUntil) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid until date is required"
+    });
+  }
+
+  const validUntilDate = new Date(req.body.validUntil);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (validUntilDate < today) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid until date cannot be in the past"
+    });
+  }
 
   const quotation = new Quotation(quotationData);
   await quotation.save();
@@ -120,14 +170,35 @@ const update = async (req, res) => {
   if (items) {
     const processedItems = [];
     for (const item of items) {
+      const quantity = item.quantity || 1;
+      const unitPrice = item.unitPrice;
+      const itemDiscountValue = item.discountValue || 0;
+
+      const subtotalBeforeDiscount = quantity * unitPrice;
+      const itemDiscountAmount = (subtotalBeforeDiscount * itemDiscountValue) / 100;
+      const totalPrice = subtotalBeforeDiscount - itemDiscountAmount;
+
       processedItems.push({
         product: item.product,
-        quantity: item.quantity || 1,
-        unitPrice: item.unitPrice,
-        totalPrice: (item.quantity || 1) * item.unitPrice,
+        quantity,
+        unitPrice,
+        discountValue: itemDiscountValue,
+        discountAmount: itemDiscountAmount,
+        totalPrice,
       });
     }
+
+    const subtotal = processedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const discountAmount = (subtotal * (discountValue || 0)) / 100;
+    const afterDiscount = subtotal - discountAmount;
+    const taxAmount = (afterDiscount * (taxRate || 0)) / 100;
+    const totalAmount = afterDiscount + taxAmount;
+
     quotation.items = processedItems;
+    quotation.subtotal = subtotal;
+    quotation.discountAmount = discountAmount;
+    quotation.taxAmount = taxAmount;
+    quotation.totalAmount = totalAmount;
   }
 
   Object.assign(quotation, otherUpdates);
@@ -180,8 +251,8 @@ const generatePDF = async (req, res) => {
 
   const displayNumber =
     quotation.status === "invoice"
-      ? quotation.quotationNo.replace(/^QUO-/, "INV-")
-      : quotation.quotationNo;
+      ? (quotation.quotationNo || "").replace(/^QUO-/, "INV-")
+      : (quotation.quotationNo || "QUOTATION");
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
@@ -193,6 +264,7 @@ const generatePDF = async (req, res) => {
 module.exports = {
   listing,
   get,
+  getQuotationItems,
   create,
   update,
   remove,

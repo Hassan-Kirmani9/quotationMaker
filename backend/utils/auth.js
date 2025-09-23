@@ -21,7 +21,7 @@ const getAllAvailablePages = () => {
   return [
     "dashboard",
     "quotations",
-    "cateringQuotations",
+    "/catering-quotations",
     "clients",
     "products",
     "sizes",
@@ -31,15 +31,22 @@ const getAllAvailablePages = () => {
 
 const generateUserPermissions = async (id, role) => {
   if (role === "admin") {
-    return getAllAvailablePages();
+    return getAllAvailablePages().map(page => `/${page}`); // Add slash prefix for all
   }
 
   const user = await User.findById(id).populate("tenant", "configs");
 
-  const pages = user.permissions.concat(user.tenant.configs?.permissions || []);
-  return pages;
-};
+  const userPermissions = user.permissions || [];
+  const tenantPermissions = user.tenant?.configs?.permissions || [];
 
+  const allPermissions = [...userPermissions, ...tenantPermissions];
+
+  const normalizedPermissions = allPermissions.map(permission => {
+    return permission.startsWith('/') ? permission : `/${permission}`;
+  });
+
+  return [...new Set(normalizedPermissions)];
+};
 module.exports = {
   generateToken,
   generateUserPermissions,

@@ -2,12 +2,14 @@ const User = require("../models/User");
 const { generateToken, generateUserPermissions } = require("../utils/auth");
 
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password , tenant ,role} = req.body;
 
   const user = new User({
     name,
     email,
     password,
+    tenant,
+    role
   });
 
   await user.save();

@@ -1,4 +1,6 @@
 const CateringQuotation = require("../models/CateringQuotation");
+const Configuration = require("../models/Configuration");
+const {generateCateringPDFBuffer} = require("../utils/cateringPdfGenerator");
 
 const listing = async (req, res) => {
   const { page = 1, limit = 10, status, client } = req.query;
@@ -104,6 +106,41 @@ const updateStatus = async (req, res) => {
   });
 };
 
+const generatePDF = async (req, res) => {
+  try {
+    
+    const quotation = await CateringQuotation.findById(req.params.id).populate("client");
+    
+    if (!quotation) {
+      return res.status(404).json({
+        success: false,
+        message: "Catering Quotation not found",
+      });
+    }
+
+
+    const configuration = await Configuration.findOne({ user: req.user._id });
+
+    const pdfBuffer = await generateCateringPDFBuffer(quotation, configuration);
+
+    const displayNumber = `CQ-${quotation._id.toString().slice(-8).toUpperCase()}`;
+    
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${displayNumber}.pdf"`
+    );
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate PDF",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   listing,
   get,
@@ -111,4 +148,5 @@ module.exports = {
   update,
   remove,
   updateStatus,
+  generatePDF,
 };

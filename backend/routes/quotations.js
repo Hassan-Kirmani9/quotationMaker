@@ -8,6 +8,7 @@ router.use(protect());
 
 router.get("/", asyncHandler(quotationController.listing));
 router.get("/:id", asyncHandler(quotationController.get));
+router.get("/:id/items", asyncHandler(quotationController.getQuotationItems));
 router.post("/", asyncHandler(quotationController.create));
 router.patch("/:id", asyncHandler(quotationController.update));
 router.delete("/:id", asyncHandler(quotationController.remove));

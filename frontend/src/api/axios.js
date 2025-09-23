@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === "production") {
   BASE_URL = "https://backend-white-water-1093.fly.dev/api";
 } else {
   console.log("Running in Development Mode");
-  BASE_URL = "http://localhost:5000/api";
+  BASE_URL = "https://backend-white-water-1093.fly.dev/api";
 }
 
 const axiosInstance = axios.create({

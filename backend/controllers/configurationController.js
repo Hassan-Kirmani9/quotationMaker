@@ -73,6 +73,7 @@ const uploadLogo = async (req, res) => {
   res.json({
     success: true,
     message: "Logo uploaded successfully",
+    logoUrl: logoBase64
   });
 };
 

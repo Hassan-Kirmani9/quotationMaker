@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useHistory, useParams } from 'react-router-dom'
-import { get, patch, put } from '../../api/axios'
-import {
-    Modal,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-    Input,
-    Label,
-    Select,
-    HelperText
-} from '@windmill/react-ui'
+import { get, patch } from '../../api/axios'
 import SectionTitle from '../../components/Typography/SectionTitle'
 import {
     Button,
@@ -28,64 +18,51 @@ import {
 import toast from 'react-hot-toast';
 import { useCurrency } from '../../context/CurrencyContext'
 
-function ViewQuotations() {
+function ViewCateringQuotation() {
     const history = useHistory()
     const { id } = useParams()
-    const { currency, formatCurrency, getCurrencySymbol } = useCurrency()
-    const [quotation, setQuotation] = useState(null)
+    const { currency, formatCurrency } = useCurrency()
+    const [cateringQuotation, setCateringQuotation] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-    const [quotationItems, setQuotationItems] = useState([])
     const [pdfLoading, setPdfLoading] = useState(false)
 
-    const fetchQuotation = async () => {
+    const fetchCateringQuotation = async () => {
         try {
             setLoading(true)
             setError('')
-            const response = await get(`/quotations/${id}`)
+            const response = await get(`/catering-quotations/${id}`)
 
             if (response.success) {
-                setQuotation(response.data)
+                setCateringQuotation(response.data)
             } else {
-                setError('Failed to fetch quotation')
+                setError('Failed to fetch catering quotation')
             }
         } catch (error) {
-            setError('Failed to fetch quotation')
-            console.error('Error fetching quotation:', error)
+            setError('Failed to fetch catering quotation')
+            console.error('Error fetching catering quotation:', error)
         } finally {
             setLoading(false)
         }
     }
-    const fetchQuotationItems = async () => {
-        try {
-            const response = await get(`/quotations/${id}/items`)
 
-            if (response.success) {
-                setQuotationItems(response.data)
-            } else {
-                console.error('Failed to fetch quotation items')
-            }
-        } catch (error) {
-            console.error('Error fetching quotation items:', error)
-        }
-    }
     const getStatusBadgeType = (status) => {
         switch (status) {
-            case 'invoice': return 'success'
             case 'quotation': return 'primary'
+            case 'invoice': return 'success'
             default: return 'primary'
         }
     }
 
     const handleToggleStatus = async () => {
-        const newStatus = quotation.status === 'quotation' ? 'invoice' : 'quotation'
+        const newStatus = cateringQuotation.status === 'quotation' ? 'invoice' : 'quotation'
 
         try {
-            const response = await patch(`/quotations/${id}/update-status`, { status: newStatus })
+            const response = await patch(`/catering-quotations/${id}/update-status`, { status: newStatus })
 
             if (response.success) {
-                toast.success(`Converted to ${newStatus} successfully!`)
-                fetchQuotation()
+                toast.success(`Status updated to ${newStatus} successfully!`)
+                fetchCateringQuotation()
             } else {
                 toast.error(response.message || "Failed to update status")
             }
@@ -94,11 +71,10 @@ function ViewQuotations() {
             toast.error(error?.response?.data?.message || "Failed to update status")
         }
     }
-
     const handleDownloadPDF = async () => {
         try {
             setPdfLoading(true)
-            const response = await fetch(`https://backend-white-water-1093.fly.dev/api/quotations/${id}/generate-pdf`, {
+            const response = await fetch(`https://backend-white-water-1093.fly.dev/api/catering-quotations/${id}/pdf`, { // Make sure this matches your backend port
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -110,13 +86,15 @@ function ViewQuotations() {
                 const url = window.URL.createObjectURL(blob)
                 const a = document.createElement('a')
                 a.href = url
-                a.download = `${getDisplayNumber()}.pdf`
+                a.download = `CQ-${cateringQuotation._id?.slice(-8).toUpperCase()}.pdf`
                 document.body.appendChild(a)
                 a.click()
                 window.URL.revokeObjectURL(url)
                 document.body.removeChild(a)
                 toast.success('PDF downloaded successfully!')
             } else {
+                const errorText = await response.text()
+                console.error('PDF generation failed:', errorText)
                 toast.error('Failed to download PDF')
             }
         } catch (error) {
@@ -126,7 +104,6 @@ function ViewQuotations() {
             setPdfLoading(false)
         }
     }
-
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A'
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -136,42 +113,9 @@ function ViewQuotations() {
         })
     }
 
-    const getDisplayNumber = () => {
-        if (!quotation.quotationNo) return 'N/A'
-        if (quotation.status === 'invoice') {
-            return quotation.quotationNo.replace(/^QUO-/, 'INV-')
-        }
-        return quotation.quotationNo
-    }
-
-    const calculateSubtotal = () => {
-        return quotationItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0
-    }
-    const calculateDiscountAmount = () => {
-        const subtotal = calculateSubtotal()
-        return quotation.discountType === 'percentage'
-            ? (subtotal * quotation.discountValue) / 100
-            : quotation.discountValue || 0
-    }
-
-    const calculateTaxAmount = () => {
-        const subtotal = calculateSubtotal()
-        const discountAmount = calculateDiscountAmount()
-        const afterDiscount = subtotal - discountAmount
-        return (afterDiscount * quotation.taxRate) / 100 || 0
-    }
-
-    const calculateTotalAmount = () => {
-        const subtotal = calculateSubtotal()
-        const discountAmount = calculateDiscountAmount()
-        const taxAmount = calculateTaxAmount()
-        return subtotal - discountAmount + taxAmount
-    }
-
     useEffect(() => {
         if (id) {
-            fetchQuotation()
-            fetchQuotationItems()
+            fetchCateringQuotation()
         }
     }, [id])
 
@@ -180,7 +124,7 @@ function ViewQuotations() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-                    <p className="mt-4 text-gray-600">Loading quotation...</p>
+                    <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
         )
@@ -193,7 +137,7 @@ function ViewQuotations() {
                     <div className="text-red-500 text-xl mb-4">{error}</div>
                     <div className="space-x-4">
                         <Button
-                            onClick={fetchQuotation}
+                            onClick={fetchCateringQuotation}
                             style={{ backgroundColor: "#AA1A21" }}
                             className="text-white"
                         >
@@ -201,9 +145,9 @@ function ViewQuotations() {
                         </Button>
                         <Button
                             layout="outline"
-                            onClick={() => history.push('/app/quotations')}
+                            onClick={() => history.push('/app/catering-quotations')}
                         >
-                            Back to Quotations
+                            Back to Catering Quotations
                         </Button>
                     </div>
                 </div>
@@ -211,16 +155,16 @@ function ViewQuotations() {
         )
     }
 
-    if (!quotation) {
+    if (!cateringQuotation) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="text-gray-500 text-xl mb-4">Quotation not found</div>
+                    <div className="text-gray-500 text-xl mb-4">Catering quotation not found</div>
                     <Button
                         layout="outline"
-                        onClick={() => history.push('/app/quotations')}
+                        onClick={() => history.push('/app/catering-quotations')}
                     >
-                        Back to Quotations
+                        Back to Catering Quotations
                     </Button>
                 </div>
             </div>
@@ -237,56 +181,43 @@ function ViewQuotations() {
                     <Card>
                         <CardBody>
                             <div className="mb-6">
-                                {/* Title Section with Edit Button */}
                                 <div className="mb-4">
                                     <div className="flex items-start justify-between mb-1">
-                                        <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200" style={{ wordBreak: 'break-words' }}>
-                                            {quotation.title}
+                                        <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200">
+                                            Catering Quotation
                                         </h2>
                                         <Button
                                             layout="link"
                                             size="icon"
                                             aria-label="Edit"
-                                            onClick={() => history.push(`/app/quotations/edit/${quotation._id}`)}
+                                            onClick={() => history.push(`/app/catering-quotations/edit/${cateringQuotation._id}`)}
                                             style={{ minWidth: '40px', minHeight: '40px', padding: '8px' }}
                                         >
                                             <IoPencil className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                                         </Button>
                                     </div>
                                     <p className="text-sm lg:text-base font-semibold text-gray-600 dark:text-gray-400">
-                                        #{getDisplayNumber()}
+                                        #{cateringQuotation._id?.slice(-8).toUpperCase() || 'N/A'}
                                     </p>
                                 </div>
-                                {/* Date Section - Mobile Optimized */}
+
                                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                                     <div className="flex-1">
                                         <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Date
                                         </h4>
                                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                            {formatDate(quotation.date)}
+                                            {formatDate(cateringQuotation.createdAt)}
                                         </p>
                                     </div>
-
                                 </div>
-                                {/* Status Badge */}
+
                                 <div className="flex items-center justify-start">
-                                    <Badge type={getStatusBadgeType(quotation.status)} className="text-xs px-2 py-1">
-                                        {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                                    <Badge type={getStatusBadgeType(cateringQuotation.status)} className="text-xs px-2 py-1">
+                                        {cateringQuotation.status.charAt(0).toUpperCase() + cateringQuotation.status.slice(1)}
                                     </Badge>
                                 </div>
                             </div>
-
-                            {quotation.description && (
-                                <div className="mb-6">
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Description
-                                    </h4>
-                                    <p className="text-gray-600 dark:text-gray-400">
-                                        {quotation.description}
-                                    </p>
-                                </div>
-                            )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-6">
                                 <div>
@@ -295,14 +226,14 @@ function ViewQuotations() {
                                     </h4>
                                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                                         <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {quotation.client?.name || 'N/A'}
+                                            {cateringQuotation.client?.name || 'N/A'}
                                         </p>
                                         <p className="text-gray-600 dark:text-gray-400">
-                                            {quotation.client?.businessName || 'N/A'}
+                                            {cateringQuotation.client?.businessName || 'N/A'}
                                         </p>
-                                        {quotation.client?.email && (
+                                        {cateringQuotation.client?.email && (
                                             <p className="text-gray-600 dark:text-gray-400">
-                                                {quotation.client.email}
+                                                {cateringQuotation.client.email}
                                             </p>
                                         )}
                                     </div>
@@ -324,85 +255,146 @@ function ViewQuotations() {
 
                     <Card>
                         <CardBody>
-                            <SectionTitle>Quotation Items</SectionTitle>
-                            <div className="overflow-x-auto lg:overflow-visible mb-5">
-                                <table className="w-full text-sm">     <thead>
-                                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                                        <th className="text-left py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Product
-                                        </th>
-                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Size
-                                        </th>
-                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Qty
-                                        </th>
-                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Rate
-                                        </th>
-                                        <th className="text-center py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Discount
-                                        </th>
-                                        <th className="text-right py-2 lg:py-3 px-1 lg:px-2 font-medium text-gray-700 dark:text-gray-300">
-                                            Total
-                                        </th>
-                                    </tr>
-                                </thead>
-                                    <tbody>
-                                        {quotationItems?.map((item, index) => (
-                                            <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
-                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-gray-800 dark:text-gray-200">
-                                                    <div style={{ minWidth: '150px', wordBreak: 'break-word', lineHeight: '1.3' }}>
-                                                        {item.product?.name || 'N/A'}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-2 text-center text-gray-800 dark:text-gray-200">
-                                                    {item.product?.size?.name || '-'}
-                                                </td>
-                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
-                                                    {item.quantity || 1}
-                                                </td>
-                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.unitPrice || 0)}
-                                                </td>
-                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
-                                                    {item.discountValue > 0 ? `${item.discountValue}%` : '-'}
-                                                </td>
-                                                <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.totalPrice || 0)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <SectionTitle>Menu Section</SectionTitle>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Per Thaal Rate
+                                    </h4>
+                                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                        {formatCurrency(cateringQuotation.menu?.perThaalRate || 0)}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Number of Thaals
+                                    </h4>
+                                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                        {cateringQuotation.menu?.numberOfThaals || 0}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Menu Total
+                                    </h4>
+                                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                        {formatCurrency(cateringQuotation.menu?.total || 0)}
+                                    </p>
+                                </div>
                             </div>
+
+                            {cateringQuotation.menu?.items && cateringQuotation.menu.items.length > 0 && (
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Menu Items</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                    <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                        Item Name
+                                                    </th>
+                                                    <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                        Amount
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {cateringQuotation.menu.items.map((item, index) => (
+                                                    <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
+                                                        <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
+                                                            {item.name || 'N/A'}
+                                                        </td>
+                                                        <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                            {formatCurrency(item.amount || 0)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </CardBody>
                     </Card>
 
-                    {(quotation.notes || quotation.terms) && (
+                    {cateringQuotation.extras?.items && cateringQuotation.extras.items.length > 0 && (
                         <Card>
                             <CardBody>
-                                {quotation.terms && (
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Terms & Conditions
-                                        </h4>
-                                        <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {quotation.terms}
-                                        </p>
+                                <SectionTitle>Extra Items</SectionTitle>
+                                <div className="overflow-x-auto mb-4">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                    Item Name
+                                                </th>
+                                                <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                    Amount
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {cateringQuotation.extras.items.map((item, index) => (
+                                                <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
+                                                    <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
+                                                        {item.name || 'N/A'}
+                                                    </td>
+                                                    <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                        {formatCurrency(item.amount || 0)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="flex justify-end">
+                                    <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Extras Total: {formatCurrency(cateringQuotation.extras?.total || 0)}
+                                        </span>
                                     </div>
-                                )}
+                                </div>
+                            </CardBody>
+                        </Card>
+                    )}
 
-                                {quotation.notes && (
-                                    <div>
-                                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Notes
-                                        </h4>
-                                        <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {quotation.notes}
-                                        </p>
+                    {cateringQuotation.others?.items && cateringQuotation.others.items.length > 0 && (
+                        <Card>
+                            <CardBody>
+                                <SectionTitle>Other Items</SectionTitle>
+                                <div className="overflow-x-auto mb-4">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                    Item Name
+                                                </th>
+                                                <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                    Amount
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {cateringQuotation.others.items.map((item, index) => (
+                                                <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
+                                                    <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
+                                                        {item.name || 'N/A'}
+                                                    </td>
+                                                    <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                        {formatCurrency(item.amount || 0)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="flex justify-end">
+                                    <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Others Total: {formatCurrency(cateringQuotation.others?.total || 0)}
+                                        </span>
                                     </div>
-                                )}
+                                </div>
                             </CardBody>
                         </Card>
                     )}
@@ -412,45 +404,45 @@ function ViewQuotations() {
                     <Card>
                         <CardBody>
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                                Quotation Summary
+                                Costing Summary
                             </h3>
 
                             <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600 text-xs lg:text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                                    <span className="text-gray-600 dark:text-gray-400">Total</span>
                                     <span className="text-gray-800 dark:text-gray-200 font-medium">
-                                        {formatCurrency(calculateSubtotal())}
+                                        {formatCurrency(cateringQuotation.costing?.total || 0)}
                                     </span>
                                 </div>
 
-                                {quotation.discountValue > 0 && (
+                                {cateringQuotation.costing?.discount > 0 && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Discount ({quotation.discountType === 'percentage' ? `${quotation.discountValue}%` : 'Fixed'})
+                                            Discount
                                         </span>
                                         <span className="text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatCurrency(calculateDiscountAmount())}
+                                            {formatCurrency(cateringQuotation.costing.discount)}
                                         </span>
                                     </div>
                                 )}
 
-                                {quotation.taxRate > 0 && (
+                                {cateringQuotation.costing?.advance > 0 && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-600 dark:text-gray-400">
-                                            Tax ({quotation.taxRate}%)
+                                            Advance
                                         </span>
                                         <span className="text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatCurrency(calculateTaxAmount())}
+                                            {formatCurrency(cateringQuotation.costing.advance)}
                                         </span>
                                     </div>
                                 )}
 
                                 <div className="border-t border-dashed border-gray-300 dark:border-gray-600 pt-3 mt-3 flex justify-between items-center">
                                     <span className="text-lg lg:text-xl font-semibold text-gray-800 dark:text-gray-200">
-                                        Total
+                                        Grand Total
                                     </span>
                                     <span className="text-xl lg:text-2xl font-bold" style={{ color: "#AA1A21" }}>
-                                        {formatCurrency(calculateTotalAmount())}
+                                        {formatCurrency(cateringQuotation.costing?.grandTotal || 0)}
                                     </span>
                                 </div>
                             </div>
@@ -470,7 +462,7 @@ function ViewQuotations() {
                                                 Status
                                             </span>
                                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                {quotation.status === 'quotation' ? 'Click to convert to Invoice' : 'Click to convert to Quotation'}
+                                                {cateringQuotation.status === 'quotation' ? 'Click to convert to Invoice' : 'Click to convert to Quotation'}
                                             </span>
                                         </div>
                                     </div>
@@ -479,7 +471,7 @@ function ViewQuotations() {
                                         <span style={{
                                             fontSize: '14px',
                                             fontWeight: '500',
-                                            color: quotation.status === 'quotation' ? '#3B82F6' : '#9CA3AF'
+                                            color: cateringQuotation.status === 'quotation' ? '#3B82F6' : '#9CA3AF'
                                         }}>
                                             Quotation
                                         </span>
@@ -492,7 +484,7 @@ function ViewQuotations() {
                                                 display: 'inline-block',
                                                 width: '44px',
                                                 height: '24px',
-                                                backgroundColor: quotation.status === 'invoice' ? '#3B82F6' : '#E5E7EB',
+                                                backgroundColor: cateringQuotation.status === 'invoice' ? '#3B82F6' : '#E5E7EB',
                                                 borderRadius: '12px',
                                                 border: 'none',
                                                 cursor: 'pointer',
@@ -504,7 +496,7 @@ function ViewQuotations() {
                                                 style={{
                                                     position: 'absolute',
                                                     top: '2px',
-                                                    left: quotation.status === 'invoice' ? '22px' : '2px',
+                                                    left: cateringQuotation.status === 'invoice' ? '22px' : '2px',
                                                     width: '20px',
                                                     height: '20px',
                                                     backgroundColor: 'white',
@@ -518,13 +510,21 @@ function ViewQuotations() {
                                         <span style={{
                                             fontSize: '14px',
                                             fontWeight: '500',
-                                            color: quotation.status === 'invoice' ? '#3B82F6' : '#9CA3AF'
+                                            color: cateringQuotation.status === 'invoice' ? '#3B82F6' : '#9CA3AF'
                                         }}>
                                             Invoice
                                         </span>
                                     </div>
-
                                 </div>
+
+                                <Button
+                                    block
+                                    layout="outline"
+                                    onClick={() => history.push('/app/catering-quotations')}
+                                >
+                                    <IoArrowBack className="w-4 h-4 mr-2" />
+                                    Back to All Catering Quotations
+                                </Button>
                                 <Button
                                     block
                                     style={{ backgroundColor: "#AA1A21" }}
@@ -544,14 +544,6 @@ function ViewQuotations() {
                                         </>
                                     )}
                                 </Button>
-                                <Button
-                                    block
-                                    layout="outline"
-                                    onClick={() => history.push('/app/quotations')}
-                                >
-                                    <IoArrowBack className="w-4 h-4 mr-2" />
-                                    Back to All Quotations
-                                </Button>
                             </div>
                         </CardBody>
                     </Card>
@@ -561,4 +553,4 @@ function ViewQuotations() {
     )
 }
 
-export default ViewQuotations
+export default ViewCateringQuotation

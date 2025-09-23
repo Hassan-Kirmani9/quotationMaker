@@ -29,7 +29,7 @@ function CreateProducts() {
   const fetchSizes = async () => {
     try {
       setLoadingSizes(true)
-      const response = await get('/sizes/all')
+      const response = await get('/sizes/')
       if (response.success) {
         setSizes(response.data.sizes)
       } else {

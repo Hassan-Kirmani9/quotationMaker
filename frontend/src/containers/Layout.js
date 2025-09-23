@@ -48,7 +48,7 @@ function Layout() {
                     exact={true}
                     path={`/app${route.path}`}
                     component={route.component}
-                    requiredPage={route.requiredPage}
+                    requiredPermission={route.name}
                   />
                 ) : null
               })}

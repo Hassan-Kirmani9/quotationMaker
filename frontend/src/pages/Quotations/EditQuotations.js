@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useHistory, useParams } from 'react-router-dom'
-import { get, put } from '../../api/axios'
+import { get, patch, put } from '../../api/axios'
 import PageTitle from '../../components/Typography/PageTitle'
 import SectionTitle from '../../components/Typography/SectionTitle'
 import { Input, Label, Button, Select, Textarea, HelperText } from '@windmill/react-ui'
@@ -13,14 +13,13 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
-
   const filteredOptions = options.filter(option =>
-    option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    option.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (option.size && option.size.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
   const selectedOption = options.find(option => option._id === value);
-  const displayValue = selectedOption ? selectedOption.name : '';
-
+  const displayValue = selectedOption ?
+    `${selectedOption.name}${selectedOption.size ? ` (${selectedOption.size.name})` : ''}` : '';
   const handleInputChange = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -113,7 +112,12 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
                   : 'hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white'
                   } ${value === option._id ? 'bg-blue-100 text-blue-900' : ''}`}
               >
-                {option.name}
+                <div>
+                  <div className="font-medium">{option.name}</div>
+                  {option.size && (
+                    <div className="text-xs text-gray-500">Size: {option.size.name}</div>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -265,7 +269,9 @@ function EditQuotations() {
   const [apiError, setApiError] = useState('')
   const [clientsList, setClientsList] = useState([])
   const [productsList, setProductsList] = useState([])
-
+  const [configuration, setConfiguration] = useState(null)
+  const [validityDays, setValidityDays] = useState(30)
+  const [validUntil, setValidUntil] = useState('')
   const [subtotal, setSubtotal] = useState(0)
   const [discountAmount, setDiscountAmount] = useState(0)
   const [taxAmount, setTaxAmount] = useState(0)
@@ -279,37 +285,55 @@ function EditQuotations() {
         setFetching(true)
         setApiError('')
 
-        const [quotationResponse, clientsResponse, productsResponse] = await Promise.all([
+        const [quotationResponse, itemsResponse, clientsResponse, productsResponse, configResponse] = await Promise.all([
           get(`/quotations/${id}`),
+          get(`/quotations/${id}/items`),
           get("/clients"),
-          get("/products")
+          get("/products"),
+          get("/configuration")
         ])
-
         if (!quotationResponse.success) {
           throw new Error('Quotation not found')
         }
 
-        const quotation = quotationResponse.data.quotation
+
+        const quotationData = quotationResponse.data.quotation || quotationResponse.data;
 
         setFormData({
-          client: quotation.client?._id || '',
-          title: quotation.title || '',
-          description: quotation.description || '',
-          discountType: quotation.discountType || 'percentage',
-          discountValue: quotation.discountValue || 0,
-          taxRate: quotation.taxRate || 0,
-          currency: quotation.currency || '',
+          client: quotationData.client?._id || quotationData.client || '',
+          title: quotationData.title || '',
+          description: quotationData.description || '',
+          discountType: quotationData.discountType || 'percentage',
+          discountValue: quotationData.discountValue || 0,
+          taxRate: quotationData.taxRate || 0,
+          currency: quotationData.currency || '',
         })
-
-        if (quotation.items && quotation.items.length > 0) {
-          setQuotationItems(quotation.items.map(item => ({
-            product: item.product?._id || item.product || '',
-            description: item.description || '',
-            quantity: item.quantity || 1,
-            unitPrice: item.unitPrice || 0,
+        // Handle items from the items endpoint
+        if (itemsResponse.success && itemsResponse.data && itemsResponse.data.length > 0) {
+          setQuotationItems(itemsResponse.data.map(item => ({
+            product: item.product?._id || item.product,
+            description: item.product?.name || item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
             discountValue: item.discountValue || 0,
-            totalPrice: item.totalPrice || 0
+            totalPrice: item.totalPrice
           })))
+        }
+
+        // Set validity data
+        if (quotationData.validUntil) {
+          setValidUntil(new Date(quotationData.validUntil).toISOString().split('T')[0])
+
+          // Calculate current validity days from the stored date
+          const quotationDate = new Date(quotationData.date || quotationData.createdAt)
+          const validUntilDate = new Date(quotationData.validUntil)
+          const diffTime = validUntilDate - quotationDate
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          setValidityDays(diffDays)
+        }
+
+        if (configResponse.success && configResponse.data) {
+          setConfiguration(configResponse.data)
         }
 
         if (clientsResponse.success) {
@@ -360,6 +384,13 @@ function EditQuotations() {
     setItemDiscountsTotal(newItemDiscountsTotal)
   }, [quotationItems, subtotal])
 
+  useEffect(() => {
+    if (validityDays) {
+      const quotationDate = new Date()
+      quotationDate.setDate(quotationDate.getDate() + parseInt(validityDays))
+      setValidUntil(quotationDate.toISOString().split('T')[0])
+    }
+  }, [validityDays])
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -387,7 +418,7 @@ function EditQuotations() {
       const selectedProduct = productsList.find(p => p._id === value)
       if (selectedProduct) {
         items[index].unitPrice = selectedProduct.sellingPrice
-        items[index].description = selectedProduct.description
+        items[index].description = selectedProduct.name
       }
     }
 
@@ -443,6 +474,7 @@ function EditQuotations() {
       if (!item.unitPrice || parseFloat(item.unitPrice) < 0) {
         newErrors[`item_${index}_unitPrice`] = 'Unit price cannot be negative'
       }
+
     })
 
     setErrors(newErrors)
@@ -460,18 +492,24 @@ function EditQuotations() {
     setApiError('')
 
     try {
-      const quotationData = {
-        ...formData,
-        items: quotationItems.map(item => ({
-          product: item.product,
-          description: item.description,
-          quantity: parseFloat(item.quantity),
-          unitPrice: parseFloat(item.unitPrice),
-          discountValue: parseFloat(item.discountValue) || 0
-        }))
-      }
+    const quotationData = {
+  ...formData,
+  validUntil,
+  date: new Date(),
+  totalAmount: totalAmount,
+  subtotal: subtotal,
+  discountAmount: discountAmount,
+  taxAmount: taxAmount,
+  items: quotationItems.map(item => ({
+    product: item.product,
+    description: item.description,
+    quantity: parseFloat(item.quantity),
+    unitPrice: parseFloat(item.unitPrice),
+    discountValue: parseFloat(item.discountValue) || 0
+  }))
+}
 
-      const response = await put(`/quotations/${id}`, quotationData)
+      const response = await patch(`/quotations/${id}`, quotationData)
 
       if (response.success) {
         alert('Quotation updated successfully!')
@@ -548,14 +586,18 @@ function EditQuotations() {
             </Label>
 
             <Label>
-              <span>Currency</span>
+              <span>Validity Period (Days) *</span>
               <Input
                 className="mt-1"
-                value={`${currency} - Will use default currency from configuration`}
-                readOnly
-                disabled
+                name="validityDays"
+                value={validityDays}
+                onChange={(e) => setValidityDays(e.target.value)}
+                type="number"
+                min="1"
+                max="365"
+                required
               />
-              <HelperText>Currency is set in Configuration settings</HelperText>
+              <HelperText>Number of days this quotation will remain valid</HelperText>
             </Label>
 
             <Label className="md:col-span-2">
@@ -724,7 +766,7 @@ function EditQuotations() {
           {/* Items Section - Mobile Card View (Visible on Mobile Only) */}
           <div className="mb-6 md:hidden">
             <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Quotation Items</h3>
-            
+
             {quotationItems.map((item, index) => (
               <MobileItemCard
                 key={index}
@@ -751,7 +793,7 @@ function EditQuotations() {
 
           {/* Pricing Details Section */}
           <SectionTitle>Pricing Details</SectionTitle>
-          
+
           {/* Desktop Pricing Layout (Hidden on Mobile) */}
           <div className="mb-6 hidden md:block">
             <div className="grid grid-cols-12 gap-2 items-end">
@@ -891,7 +933,7 @@ function EditQuotations() {
                       </div>
                     </div>
                   </Label>
-                  
+
                   <Label>
                     <span className="text-sm">Discount Amount</span>
                     <Input
@@ -924,7 +966,7 @@ function EditQuotations() {
                       </div>
                     </div>
                   </Label>
-                  
+
                   <Label>
                     <span className="text-sm">Tax Amount</span>
                     <Input

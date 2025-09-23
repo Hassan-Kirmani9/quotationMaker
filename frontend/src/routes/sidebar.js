@@ -18,6 +18,12 @@ const routes = [
     requiredPage: '/clients'
   },
   {
+    path: '/app/catering-quotations',
+    icon: 'FormsIcon', 
+    name: 'Catering Quotations',
+    requiredPage: '/catering-quotations'
+  },
+  {
     path: '/app/products',
     icon: 'ChartsIcon',
     name: 'Products',

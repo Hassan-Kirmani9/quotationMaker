@@ -15,12 +15,12 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
   const inputRef = useRef(null);
 
   const filteredOptions = options.filter(option =>
-    (option.description || option.name).toLowerCase().includes(searchTerm.toLowerCase())
+    option.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (option.size && option.size.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
   const selectedOption = options.find(option => option._id === value);
-  const displayValue = selectedOption ? (selectedOption.description || selectedOption.name) : '';
-
+  const displayValue = selectedOption ?
+    `${selectedOption.name}${selectedOption.size ? ` (${selectedOption.size.name})` : ''}` : '';
   const handleInputChange = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
@@ -113,7 +113,12 @@ const AutocompleteSelect = ({ value, onChange, options, placeholder, error, clas
                   : 'hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white '
                   } ${value === option._id ? 'bg-blue-100 text-blue-900' : ''}`}
               >
-                {option.description}
+                <div>
+                  <div className="font-medium">{option.name}</div>
+                  {option.size && (
+                    <div className="text-xs text-gray-500">Size: {option.size.name}</div>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -263,7 +268,9 @@ function CreateQuotations() {
   const [clientsList, setClientsList] = useState([])
   const [productsList, setProductsList] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
-
+  const [configuration, setConfiguration] = useState(null)
+  const [validityDays, setValidityDays] = useState(30)
+  const [validUntil, setValidUntil] = useState('')
   const [subtotal, setSubtotal] = useState(0)
   const [discountAmount, setDiscountAmount] = useState(0)
   const [taxAmount, setTaxAmount] = useState(0)
@@ -275,9 +282,10 @@ function CreateQuotations() {
     try {
       setDataLoading(true)
 
-      const [clientsResponse, productsResponse, currenciesResponse] = await Promise.all([
+      const [clientsResponse, productsResponse, configResponse] = await Promise.all([
         get("/clients"),
         get("/products"),
+        get("/configuration")
       ])
 
       if (clientsResponse.success) {
@@ -286,6 +294,17 @@ function CreateQuotations() {
 
       if (productsResponse.success) {
         setProductsList(productsResponse.data.products || [])
+      }
+
+      if (configResponse.success && configResponse.data) {
+        setConfiguration(configResponse.data)
+        const defaultValidity = configResponse.data.quotation?.validity || 30
+        setValidityDays(defaultValidity)
+
+        // Calculate default validUntil date
+        const defaultValidUntil = new Date()
+        defaultValidUntil.setDate(defaultValidUntil.getDate() + defaultValidity)
+        setValidUntil(defaultValidUntil.toISOString().split('T')[0])
       }
 
     } catch (error) {
@@ -327,6 +346,14 @@ function CreateQuotations() {
     setItemDiscountsTotal(newItemDiscountsTotal)
   }, [quotationItems, subtotal])
 
+  useEffect(() => {
+    if (validityDays) {
+      const newValidUntil = new Date()
+      newValidUntil.setDate(newValidUntil.getDate() + parseInt(validityDays))
+      setValidUntil(newValidUntil.toISOString().split('T')[0])
+    }
+  }, [validityDays])
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -354,10 +381,9 @@ function CreateQuotations() {
       const selectedProduct = productsList.find(p => p._id === value)
       if (selectedProduct) {
         items[index].unitPrice = selectedProduct.sellingPrice
-        items[index].description = selectedProduct.description
+        items[index].description = selectedProduct.name
       }
     }
-
     if (field === 'quantity' || field === 'unitPrice' || field === 'product' || field === 'discountValue') {
       const quantity = parseFloat(items[index].quantity) || 0
       const unitPrice = parseFloat(items[index].unitPrice) || 0
@@ -370,7 +396,7 @@ function CreateQuotations() {
 
     setQuotationItems(items)
   }
-  
+
   const addQuotationItem = () => {
     setQuotationItems([...quotationItems, {
       product: '',
@@ -399,6 +425,7 @@ function CreateQuotations() {
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required'
     }
+
 
     quotationItems.forEach((item, index) => {
       if (!item.product) {
@@ -429,6 +456,12 @@ function CreateQuotations() {
     try {
       const quotationData = {
         ...formData,
+        validUntil,
+        date: new Date(),
+        totalAmount: totalAmount,
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        taxAmount: taxAmount,
         items: quotationItems.map(item => ({
           product: item.product,
           description: item.description,
@@ -437,11 +470,16 @@ function CreateQuotations() {
           discountValue: parseFloat(item.discountValue) || 0
         }))
       }
-
       const response = await post("/quotations", quotationData)
       if (response.success) {
         alert('Quotation created successfully!')
-        history.push(`/app/quotations/view/${response.data.quotation._id}`)
+        // Check if the response structure has the quotation ID
+        const quotationId = response.data?.quotation?._id || response.data?._id
+        if (quotationId) {
+          history.push(`/app/quotations/view/${quotationId}`)
+        } else {
+          history.push('/app/quotations')
+        }
       } else {
         setApiError(response.message || 'Failed to create quotation. Please try again.')
       }
@@ -513,15 +551,20 @@ function CreateQuotations() {
             </Label>
 
             <Label>
-              <span>Currency</span>
+              <span>Validity Period (Days) *</span>
               <Input
                 className="mt-1"
-                value={`${currency} - Will use default currency from configuration`}
-                readOnly
-                disabled
+                name="validityDays"
+                value={validityDays}
+                onChange={(e) => setValidityDays(e.target.value)}
+                type="number"
+                min="1"
+                max="365"
+                required
               />
-              <HelperText>Currency is set in Configuration settings</HelperText>
+              <HelperText>Number of days this quotation will remain valid</HelperText>
             </Label>
+
 
             <Label className="md:col-span-2">
               <span>Title *</span>
@@ -689,7 +732,7 @@ function CreateQuotations() {
           {/* Items Section - Mobile Card View (Visible on Mobile Only) */}
           <div className="mb-6 md:hidden">
             <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Quotation Items</h3>
-            
+
             {quotationItems.map((item, index) => (
               <MobileItemCard
                 key={index}
@@ -716,7 +759,7 @@ function CreateQuotations() {
 
           {/* Pricing Details Section */}
           <SectionTitle>Pricing Details</SectionTitle>
-          
+
           {/* Desktop Pricing Layout (Hidden on Mobile) */}
           <div className="mb-6 hidden md:block">
             <div className="grid grid-cols-12 gap-2 items-end">
@@ -856,7 +899,7 @@ function CreateQuotations() {
                       </div>
                     </div>
                   </Label>
-                  
+
                   <Label>
                     <span className="text-sm">Discount Amount</span>
                     <Input
@@ -889,7 +932,7 @@ function CreateQuotations() {
                       </div>
                     </div>
                   </Label>
-                  
+
                   <Label>
                     <span className="text-sm">Tax Amount</span>
                     <Input
