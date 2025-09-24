@@ -69,13 +69,7 @@ function ViewQuotations() {
             console.error('Error fetching quotation items:', error)
         }
     }
-    const getStatusBadgeType = (status) => {
-        switch (status) {
-            case 'invoice': return 'success'
-            case 'quotation': return 'primary'
-            default: return 'primary'
-        }
-    }
+
 
     const handleToggleStatus = async () => {
         const newStatus = quotation.status === 'quotation' ? 'invoice' : 'quotation'
@@ -269,12 +263,7 @@ function ViewQuotations() {
                                     </div>
 
                                 </div>
-                                {/* Status Badge */}
-                                <div className="flex items-center justify-start">
-                                    <Badge type={getStatusBadgeType(quotation.status)} className="text-xs px-2 py-1">
-                                        {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-                                    </Badge>
-                                </div>
+                               
                             </div>
 
                             {quotation.description && (
@@ -288,35 +277,22 @@ function ViewQuotations() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-6">
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Client
-                                    </h4>
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {quotation.client?.name || 'N/A'}
-                                        </p>
+                            <div className="mb-6">
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Client
+                                </h4>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                                        {quotation.client?.name || 'N/A'}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-400">
+                                        {quotation.client?.businessName || 'N/A'}
+                                    </p>
+                                    {quotation.client?.email && (
                                         <p className="text-gray-600 dark:text-gray-400">
-                                            {quotation.client?.businessName || 'N/A'}
+                                            {quotation.client.email}
                                         </p>
-                                        {quotation.client?.email && (
-                                            <p className="text-gray-600 dark:text-gray-400">
-                                                {quotation.client.email}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Currency
-                                    </h4>
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {currency}
-                                        </p>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </CardBody>
@@ -363,13 +339,13 @@ function ViewQuotations() {
                                                     {item.quantity || 1}
                                                 </td>
                                                 <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.unitPrice || 0)}
+                                                    {item.unitPrice}
                                                 </td>
                                                 <td className="py-3 lg:py-4 px-1 lg:px-2 text-center text-gray-800 dark:text-gray-200">
                                                     {item.discountValue > 0 ? `${item.discountValue}%` : '-'}
                                                 </td>
                                                 <td className="py-3 lg:py-4 px-1 lg:px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                    {formatCurrency(item.totalPrice || 0)}
+                                                    {item.totalPrice}
                                                 </td>
                                             </tr>
                                         ))}

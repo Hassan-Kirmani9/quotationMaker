@@ -79,8 +79,27 @@ const generateCateringPDFBuffer = (quotation, configuration) => {
     
     if (quotation.client?.address) {
       doc.moveDown(0.5);
-      doc.font("Helvetica-Bold").text("Address: ", 40, doc.y, { continued: true });
-      doc.font("Helvetica").text(quotation.client.address);
+      const addressY = doc.y;
+      
+      // Calculate label width first
+      doc.fontSize(12).font("Helvetica-Bold");
+      const labelWidth = doc.widthOfString("Address: ");
+      
+      // Write the label on its own line
+      doc.text("Address: ", 40, addressY, { continued: false });
+      
+      // Calculate starting X position for address text (right after the label)
+      const addressStartX = 40 + labelWidth;
+      
+      // Calculate available width from after label to right column start
+      const availableWidth = 350 - addressStartX - 10; // 10px padding from right column
+      
+      // Write address starting from after the label, with proper width constraint
+      doc.font("Helvetica");
+      doc.text(quotation.client.address, addressStartX, addressY, {
+        width: availableWidth,
+        align: 'left'
+      });
     }
 
     // Right side - Quotation details

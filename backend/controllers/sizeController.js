@@ -71,11 +71,22 @@ const remove = async (req, res) => {
     message: "Size deleted successfully",
   });
 };
+const dropdown = async (req, res) => {
+  const sizes = await Size.find({ user: req.user._id })
+    .select('_id name')
+    .sort({ name: 1 })
+    .lean();
 
+  res.json({
+    success: true,
+    data: sizes,
+  });
+};
 module.exports = {
   listing,
   get,
   create,
   update,
   remove,
+  dropdown
 };

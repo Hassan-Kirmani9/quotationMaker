@@ -25,6 +25,7 @@ import {
     IoBusinessOutline,
     IoCalendarOutline
 } from 'react-icons/io5'
+import { formatDate } from '../../utils/dateFormatter'
 
 function Quotations() {
     const history = useHistory()
@@ -265,7 +266,7 @@ function Quotations() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-sm">
-                                                    {new Date(quotation.date).toLocaleDateString()}
+                                                        {formatDate(quotation.date)}
                                                 </span>
                                             </TableCell>
 

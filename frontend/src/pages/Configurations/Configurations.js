@@ -184,23 +184,6 @@ function Configuration() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        {/* Bank Info Section */}
-        <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Bank Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Label>
-            <span>Bank Name</span>
-            <Input name="bankName" value={form.bankName} onChange={handleChange} />
-          </Label>
-          <Label>
-            <span>Account Name</span>
-            <Input name="accountName" value={form.accountName} onChange={handleChange} />
-          </Label>
-          <Label>
-            <span>Account Number</span>
-            <Input name="accountNumber" value={form.accountNumber} onChange={handleChange} />
-          </Label>
-
-        </div>
 
         {/* Business Info Section */}
         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Business Information</h3>
@@ -300,6 +283,24 @@ function Configuration() {
             </div>
           )}
         </div>
+        {/* Bank Info Section */}
+        <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Bank Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Label>
+            <span>Bank Name</span>
+            <Input name="bankName" value={form.bankName} onChange={handleChange} />
+          </Label>
+          <Label>
+            <span>Account Name</span>
+            <Input name="accountName" value={form.accountName} onChange={handleChange} />
+          </Label>
+          <Label>
+            <span>Account Number</span>
+            <Input name="accountNumber" value={form.accountNumber} onChange={handleChange} />
+          </Label>
+
+        </div>
+
 
         {/* Quotation Settings Section */}
         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Quotation Settings</h3>

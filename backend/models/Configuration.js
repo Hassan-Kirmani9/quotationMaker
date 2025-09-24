@@ -24,6 +24,7 @@ const configurationSchema = new mongoose.Schema(
       validity: { type: Number, required: true, default: 30 },
       terms: { type: String },
       prefix: { type: String, required: true, default: "QUO" },
+      invoicePrefix: { type: String, required: true, default: "INV" },
     },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },

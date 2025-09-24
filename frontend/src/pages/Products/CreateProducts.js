@@ -29,9 +29,9 @@ function CreateProducts() {
   const fetchSizes = async () => {
     try {
       setLoadingSizes(true)
-      const response = await get('/sizes/')
+      const response = await get('/sizes/dropdown')
       if (response.success) {
-        setSizes(response.data.sizes)
+        setSizes(response.data)
       } else {
         console.error('Error fetching sizes:', response.message)
       }
@@ -98,12 +98,12 @@ function CreateProducts() {
     setApiError('')
 
     try {
-const cleanedData = {
-  name: formData.name.trim(),
-  sellingPrice: parseFloat(formData.sellingPrice),
-  purchasePrice: parseFloat(formData.purchasePrice),
-  size: formData.size
-}
+      const cleanedData = {
+        name: formData.name.trim(),
+        sellingPrice: parseFloat(formData.sellingPrice),
+        purchasePrice: parseFloat(formData.purchasePrice),
+        size: formData.size
+      }
 
       const response = await post("/products", cleanedData)
 
@@ -191,7 +191,7 @@ const cleanedData = {
             <Label>
               <div className="flex justify-between items-center">
                 <span>Size *</span>
-             
+
               </div>
               {loadingSizes ? (
                 <div className="mt-1 p-2 text-gray-500">Loading sizes...</div>

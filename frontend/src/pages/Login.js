@@ -118,7 +118,7 @@ function Login() {
                 <img src={logo} alt="Logo" className="h-14 w-auto" />
               </div>
 
-              <h1 className="mb-4 text-xl font-semibold text-gray-700 dark:text-gray-200">
+              <h1 className="mb-4 text-xl text-center font-semibold text-gray-700 dark:text-gray-200">
                 Quotation Maker Login
               </h1>
 
@@ -161,7 +161,7 @@ function Login() {
                   className="mt-4 w-full p-2 rounded-lg text-white hover:opacity-90 transition-opacity disabled:opacity-50"
                   style={{ backgroundColor: "#AA1A21" }}
                 >
-                  {loginLoading ? 'Logging in...' : 'Log in to Quotation Maker'}
+                  {loginLoading ? 'Logging in...' : 'Log in'}
                 </button>
 
 

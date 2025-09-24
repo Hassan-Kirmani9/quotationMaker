@@ -46,14 +46,6 @@ function ViewCateringQuotation() {
         }
     }
 
-    const getStatusBadgeType = (status) => {
-        switch (status) {
-            case 'quotation': return 'primary'
-            case 'invoice': return 'success'
-            default: return 'primary'
-        }
-    }
-
     const handleToggleStatus = async () => {
         const newStatus = cateringQuotation.status === 'quotation' ? 'invoice' : 'quotation'
 
@@ -212,42 +204,25 @@ function ViewCateringQuotation() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-start">
-                                    <Badge type={getStatusBadgeType(cateringQuotation.status)} className="text-xs px-2 py-1">
-                                        {cateringQuotation.status.charAt(0).toUpperCase() + cateringQuotation.status.slice(1)}
-                                    </Badge>
-                                </div>
+                              
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-6">
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Client
-                                    </h4>
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {cateringQuotation.client?.name || 'N/A'}
-                                        </p>
+                            <div className="mb-6">
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Client
+                                </h4>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                                        {cateringQuotation.client?.name || 'N/A'}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-400">
+                                        {cateringQuotation.client?.businessName || 'N/A'}
+                                    </p>
+                                    {cateringQuotation.client?.email && (
                                         <p className="text-gray-600 dark:text-gray-400">
-                                            {cateringQuotation.client?.businessName || 'N/A'}
+                                            {cateringQuotation.client.email}
                                         </p>
-                                        {cateringQuotation.client?.email && (
-                                            <p className="text-gray-600 dark:text-gray-400">
-                                                {cateringQuotation.client.email}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Currency
-                                    </h4>
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">
-                                            {currency}
-                                        </p>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </CardBody>
@@ -305,7 +280,7 @@ function ViewCateringQuotation() {
                                                             {item.name || 'N/A'}
                                                         </td>
                                                         <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                            {formatCurrency(item.amount || 0)}
+                                                            {item.amount}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -340,7 +315,7 @@ function ViewCateringQuotation() {
                                                         {item.name || 'N/A'}
                                                     </td>
                                                     <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                        {formatCurrency(item.amount || 0)}
+                                                        {item.amount}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -381,7 +356,7 @@ function ViewCateringQuotation() {
                                                         {item.name || 'N/A'}
                                                     </td>
                                                     <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                        {formatCurrency(item.amount || 0)}
+                                                        {item.amount}
                                                     </td>
                                                 </tr>
                                             ))}

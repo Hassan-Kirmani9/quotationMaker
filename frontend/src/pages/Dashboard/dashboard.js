@@ -24,6 +24,7 @@ const Dashboard = () => {
     const { formatCurrency } = useCurrency();
 
     const [loading, setLoading] = useState(true);
+    
     const [error, setError] = useState('');
     const [dashboardData, setDashboardData] = useState({
         quotations: { total: 0, recent: [] },
@@ -52,11 +53,10 @@ const Dashboard = () => {
             const clients = clientsRes.success ? clientsRes.data.clients : [];
             const products = productsRes.success ? productsRes.data.products : [];
 
-            // Calculate stats from quotations
-            const acceptedQuotations = quotations.filter(q => q.status === 'accepted');
-            const pendingQuotations = quotations.filter(q => ['sent', 'viewed', 'draft'].includes(q.status));
-            const totalRevenue = acceptedQuotations.reduce((sum, q) => sum + (q.totalAmount || 0), 0);
-            const conversionRate = quotations.length > 0 ? (acceptedQuotations.length / quotations.length) * 100 : 0;
+            const invoices = quotations.filter(q => q.status === 'invoice');
+            const quotationStatus = quotations.filter(q => q.status === 'quotation');
+            const totalRevenue = invoices.reduce((sum, q) => sum + (q.totalAmount || 0), 0);
+            const conversionRate = quotations.length > 0 ? (invoices.length / quotations.length) * 100 : 0;
 
             setDashboardData({
                 quotations: {
@@ -73,8 +73,8 @@ const Dashboard = () => {
                 },
                 stats: {
                     totalRevenue,
-                    acceptedQuotations: acceptedQuotations.length,
-                    pendingQuotations: pendingQuotations.length,
+                    acceptedQuotations: invoices.length,
+                    pendingQuotations: quotationStatus.length,
                     conversionRate: Math.round(conversionRate)
                 }
             });
@@ -149,9 +149,10 @@ const Dashboard = () => {
                 )}
                 {status && (
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
-                        status === 'sent' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
-                        status === 'viewed' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
+                        status === 'invoice' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                        status === 'quotation' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
+                        status === 'sent' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
+                        status === 'viewed' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
                         status === 'draft' ? 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100' :
                         'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
                     }`}>
@@ -193,16 +194,13 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="p-6 space-y-8">
-                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
                     <div>
                         <PageTitle>Dashboard</PageTitle>
                         <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back! Here's what's happening with your business.</p>
                     </div>
-                  
                 </div>
 
-                {/* Metrics Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <MetricCard
                         title="Total Revenue"
@@ -211,7 +209,7 @@ const Dashboard = () => {
                         color="bg-gradient-to-r from-green-500 to-green-600"
                     />
                     <MetricCard
-                        title="Accepted Quotations"
+                        title="Total Invoices"
                         value={dashboardData.stats.acceptedQuotations}
                         icon={IoCheckmarkCircle}
                         color="bg-gradient-to-r from-blue-500 to-blue-600"
@@ -230,7 +228,6 @@ const Dashboard = () => {
                     />
                 </div>
 
-                {/* Quick Actions */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -258,9 +255,7 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Recent Activity Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recent Quotations */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center justify-between">
@@ -303,7 +298,6 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Recent Clients */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                             <div className="flex items-center justify-between">
@@ -345,7 +339,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Overview Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
                         <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mx-auto mb-3">

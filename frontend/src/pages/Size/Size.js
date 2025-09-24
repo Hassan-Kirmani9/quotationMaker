@@ -27,6 +27,7 @@ import {
     IoResize,
     IoAdd
 } from 'react-icons/io5'
+import { formatDate } from '../../utils/dateFormatter'
 
 function Sizes() {
     const [pageTable, setPageTable] = useState(1)
@@ -98,7 +99,7 @@ function Sizes() {
         return () => clearTimeout(timeoutId)
     }
 
-    
+
     const handleDelete = async (id, sizeName) => {
         if (window.confirm(`Are you sure you want to delete "${sizeName}"? This action cannot be undone.`)) {
             try {
@@ -117,7 +118,7 @@ function Sizes() {
         }
     }
 
-    
+
     const openCreateModal = () => {
         setCreateFormData({ name: '' })
         setCreateErrors({})
@@ -203,7 +204,7 @@ function Sizes() {
         }
     }
 
-    
+
     const handleEdit = (size) => {
         setEditingSize(size)
         setEditFormData({
@@ -344,7 +345,7 @@ function Sizes() {
                 </Button>
             </div>
 
-            {}
+            { }
             <div className="mb-4">
                 <Input
                     placeholder="Search sizes by name..."
@@ -381,7 +382,7 @@ function Sizes() {
                 </div>
             ) : (
                 <>
-                    {}
+                    { }
                     <div className="hidden md:block">
                         <TableContainer className="mb-8">
                             <Table>
@@ -404,8 +405,7 @@ function Sizes() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-sm">
-                                                    {new Date(size.createdAt).toLocaleDateString()}
-                                                </span>
+                                                    {formatDate(size.createdAt)}                                                </span>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center space-x-4">
@@ -445,7 +445,7 @@ function Sizes() {
                         </TableContainer>
                     </div>
 
-                    {}
+                    { }
                     <div className="block md:hidden">
                         <div className="space-y-4 mb-8">
                             {dataTable.map((size) => (
@@ -453,7 +453,7 @@ function Sizes() {
                                     key={size._id}
                                     className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative"
                                 >
-                                    {}
+                                    { }
                                     <div className="flex justify-between items-start mb-4">
                                         <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4">
                                             {size.name}
@@ -476,18 +476,18 @@ function Sizes() {
                                         </div>
                                     </div>
 
-                                    {}
+                                    { }
                                     <div className="flex items-center">
                                         <IoResize className="w-4 h-4 mr-2 text-purple-600" />
                                         <div className="text-sm text-gray-600">
-                                            Created: {new Date(size.createdAt).toLocaleDateString()}
+                                            Created: {formatDate(size.createdAt)}
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {}
+                        { }
                         {totalPages > 1 && (
                             <div className="flex justify-center">
                                 <Pagination
@@ -502,7 +502,7 @@ function Sizes() {
                 </>
             )}
 
-            {}
+            { }
             <Modal isOpen={isCreateModalOpen} onClose={closeCreateModal}>
                 <ModalHeader>Create New Size</ModalHeader>
                 <ModalBody className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
@@ -566,7 +566,7 @@ function Sizes() {
                 </ModalFooter>
             </Modal>
 
-            {}
+            { }
             <Modal isOpen={isEditModalOpen} onClose={closeEditModal}>
                 <ModalHeader>Edit Size</ModalHeader>
                 <ModalBody className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">

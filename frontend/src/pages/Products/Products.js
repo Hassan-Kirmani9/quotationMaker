@@ -67,9 +67,9 @@ function Products() {
     const fetchSizes = async () => {
         try {
             setLoadingSizes(true)
-            const response = await get('/sizes/all')
+            const response = await get('/sizes/dropdown')
             if (response.success) {
-                setSizes(response.data.sizes)
+                setSizes(response.data)
             }
         } catch (error) {
             console.error('Error fetching sizes:', error)
@@ -148,7 +148,7 @@ function Products() {
         setEditErrors({})
         setEditApiError('')
         setIsModalOpen(true)
-        
+
         if (sizes.length === 0) {
             fetchSizes()
         }
@@ -358,12 +358,12 @@ function Products() {
                                                     {product.size?.name || 'N/A'}
                                                 </span>
                                             </TableCell>
-                                            
+
                                             <TableCell>
                                                 <span className="text-sm">{formatCurrency(product.purchasePrice)}</span>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="text-sm font-semibold">{formatCurrency(product.sellingPrice)}</span>
+                                                <span className="text-sm">{formatCurrency(product.sellingPrice)}</span>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center space-x-4">
@@ -518,7 +518,7 @@ function Products() {
                                 )}
                             </Label>
 
-                          
+
 
                             <Label>
                                 <span>Size *</span>
