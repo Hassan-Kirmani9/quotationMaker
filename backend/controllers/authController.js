@@ -1,15 +1,19 @@
 const User = require("../models/User");
+const Plan = require("../models/Plan");
 const { generateToken, generateUserPermissions } = require("../utils/auth");
 
 const registerUser = async (req, res) => {
-  const { name, email, password , tenant ,role} = req.body;
+  const { name, email, password, tenant, role } = req.body;
 
+  const defaultPlan = await Plan.findOne({ name: process.env.DEFAULT_PLAN || 'starter' });
+  
   const user = new User({
     name,
     email,
     password,
     tenant,
-    role
+    role,
+    plan: defaultPlan ? defaultPlan._id : undefined
   });
 
   await user.save();
@@ -63,7 +67,10 @@ const me = async (req, res) => {
   const user = req.user;
   const permissions = await generateUserPermissions(user.id, user.role);
 
-  const dbUser = await User.findById(user.id).populate("tenant");
+  const dbUser = await User.findById(user.id)
+    .populate("tenant")
+    .populate("plan", "_id name");
+
   dbUser["permissions"] = permissions;
 
   res.json({

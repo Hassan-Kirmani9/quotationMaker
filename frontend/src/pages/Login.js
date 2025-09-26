@@ -4,6 +4,8 @@ import logo from '../assets/img/logo.png'
 import { Label, Input, HelperText } from '@windmill/react-ui'
 import { get, post } from '../api/axios'
 import { useAuth } from '../context/AuthContext'
+// Import eye icons from react-icons
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
 
 function Login() {
   const history = useHistory()
@@ -23,6 +25,7 @@ function Login() {
   })
   const [error, setError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -31,6 +34,10 @@ function Login() {
       [name]: value
     }))
     setError('')
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
   }
 
   const handleLogin = async (e) => {
@@ -110,7 +117,7 @@ function Login() {
 
   return (
     <div className="flex items-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
-      <div className="flex-1 h-full max-w-sm mx-auto overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-800">
+      <div className="flex-1 h-full max-w-sm mx-auto overflow-hidden bg-white rounded-lg shadow-xl dark:bg-gray-700">
         <div className="flex flex-col overflow-y-auto">
           <main className="flex items-center justify-center p-6">
             <div className="w-full">
@@ -138,15 +145,28 @@ function Login() {
 
                 <Label className="mt-4">
                   <span>Password</span>
-                  <Input
-                    className="mt-1"
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Enter your password"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      className="mt-1"
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter your password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 mt-1"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="h-5 w-5 text-gray-500" />
+                      ) : (
+                        <FaEye className="h-5 w-5 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
                 </Label>
 
                 {error && (

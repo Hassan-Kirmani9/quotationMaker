@@ -150,21 +150,26 @@ const MobileItemCard = ({ item, index, productsList, errors, handleItemChange, r
         {/* Product Selection */}
         <Label>
           <span className="text-sm">Product *</span>
-          <AutocompleteSelect
+          <Select
+            className="mt-1"
             value={item.product}
-            onChange={(value) => handleItemChange(index, 'product', value)}
-            options={productsList}
-            placeholder="Search and select product..."
-            error={errors[`item_${index}_product`]}
-            className="w-full mt-1"
-          />
+            onChange={(e) => handleItemChange(index, 'product', e.target.value)}
+            required
+            valid={!errors[`item_${index}_product`]}
+          >
+            <option value="">Select Product</option>
+            {productsList.map((product) => (
+              <option key={product._id} value={product._id}>
+                {product.name}{product.size ? ` (${product.size.name})` : ''}
+              </option>
+            ))}
+          </Select>
           {errors[`item_${index}_product`] && (
             <HelperText valid={false} className="mt-1 text-xs">
               {errors[`item_${index}_product`]}
             </HelperText>
           )}
         </Label>
-
         {/* Quantity and Unit Price Row */}
         <div className="grid grid-cols-2 gap-3">
           <Label>
@@ -945,7 +950,7 @@ function CreateQuotations() {
               </div>
 
               {/* Total Amount */}
-              <div className="flex justify-between items-center p-4 rounded-lg">
+              <div className="flex justify-between items-center p-4 rounded-lg dark:text-gray-400">
                 <span className="text-lg font-bold">Total Amount:</span>
                 <span className="text-lg font-bold">{currency} {totalAmount.toFixed(2)}</span>
               </div>
@@ -953,7 +958,7 @@ function CreateQuotations() {
           </div>
 
           {/* Action Buttons - Responsive Layout */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-6">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-0 sm:space-x-4 mt-6">
             <Button
               type="button"
               layout="outline"

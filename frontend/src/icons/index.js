@@ -28,6 +28,11 @@ import { ReactComponent as DropdownIcon } from './dropdown.svg'
 import { ReactComponent as OutlinePersonIcon } from './outlinePerson.svg'
 import { ReactComponent as OutlineCogIcon } from './outlineCog.svg'
 import { ReactComponent as OutlineLogoutIcon } from './outlineLogout.svg'
+import { ReactComponent as Products } from './opened-packaged-svgrepo-com.svg'
+import { ReactComponent as Sizes } from './size-fullscreen-svgrepo-com.svg'
+import { ReactComponent as Catering } from './knife-fork-and-plate-svgrepo-com.svg'
+import { ReactComponent as Cog } from './cog-svgrepo-com.svg'
+import { ReactComponent as Quotation } from './invoice-paper-svgrepo-com.svg'
 
 export {
   ButtonsIcon,
@@ -35,7 +40,11 @@ export {
   ChartsIcon,
   FormsIcon,
   SettingsIcon,
-
+  Quotation,
+  Cog,
+  Catering,
+  Sizes,
+  Products,
   HomeIcon,
   ModalsIcon,
   PagesIcon,

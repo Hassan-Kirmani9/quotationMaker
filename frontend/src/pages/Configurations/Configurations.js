@@ -32,6 +32,8 @@ function Configuration() {
   const [error, setError] = useState('');
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+
   const getImageUrl = (logoPath) => {
     if (!logoPath) return '';
     if (logoPath.startsWith('data:image/')) return logoPath;
@@ -83,22 +85,45 @@ function Configuration() {
     if (error) setError('');
   };
 
+  const processFile = (file) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Logo file size should be less than 5MB');
+      return;
+    }
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setLogoPreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+    if (error) setError('');
+  };
+
   const handleLogoUpload = e => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Logo file size should be less than 5MB');
-        return;
-      }
-
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setLogoPreview(event.target.result);
-      };
-      reader.readAsDataURL(file);
-      if (error) setError('');
+      processFile(file);
     }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      processFile(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
   };
 
   const removeLogo = () => {
@@ -106,6 +131,7 @@ function Configuration() {
     setLogoPreview('');
     document.getElementById('logo-upload').value = '';
   };
+
   const handleSubmit = async () => {
     setSaving(true);
     setError('');
@@ -185,7 +211,6 @@ function Configuration() {
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
 
-        {/* Business Info Section */}
         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Business Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <Label>
@@ -203,7 +228,7 @@ function Configuration() {
             />
             <HelperText>Choose color for business name in documents</HelperText>
           </Label>
-          <Label>
+          <Label className="md:col-span-2">
             <span>Business Address</span>
             <Input name="address" value={form.address} onChange={handleChange} />
           </Label>
@@ -222,17 +247,6 @@ function Configuration() {
           <Label>
             <span>Website URL</span>
             <Input name="web" value={form.web} onChange={handleChange} />
-          </Label>
-          <Label>
-            <span>Business Logo</span>
-            <input
-              id="logo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-gray-700 dark:file:text-gray-300"
-            />
-            <HelperText>Upload an image file (max 5MB)</HelperText>
           </Label>
           <Label>
             <span>Tax ID</span>
@@ -260,13 +274,48 @@ function Configuration() {
             </Select>
             <HelperText>Currency for all quotations and pricing</HelperText>
           </Label>
-          {logoPreview && (
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-4">
+          <Label>
+            <span>Business Logo</span>
+            <div className="mt-1">
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <div
+                className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  dragOver 
+                    ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20' 
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
+                onClick={() => document.getElementById('logo-upload').click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="font-medium text-purple-600 dark:text-purple-400">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                </div>
+              </div>
+            </div>
+            <HelperText>Upload your business logo</HelperText>
+          </Label>
+          <div>
+            {logoPreview && (
+              <div className="flex flex-col items-center gap-3">
                 <img
                   src={getImageUrl(logoPreview)}
                   alt="Logo Preview"
-                  className="h-20 mt-2 object-contain rounded border"
+                  className=" object-contain rounded border mt-2"
+                  style={{ maxHeight: '120px' }}
                   onError={(e) => {
                     console.error('Image failed to load:', e.target.src);
                     e.target.style.display = 'none';
@@ -280,10 +329,10 @@ function Configuration() {
                   Remove Logo
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-        {/* Bank Info Section */}
+
         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Bank Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <Label>
@@ -301,8 +350,6 @@ function Configuration() {
 
         </div>
 
-
-        {/* Quotation Settings Section */}
         <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Quotation Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Label>

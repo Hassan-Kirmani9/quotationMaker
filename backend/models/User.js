@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
       ref: "Tenant",
       required: true,
     },
+    plan: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Plan",
+      required: false
+    },
     permissions: {
       type: [String],
       default: [],
@@ -54,10 +59,10 @@ userSchema.pre("save", async function (next) {
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
+  next();
 });
 
 // Compare password method
@@ -76,10 +81,10 @@ userSchema.post("save", async function (doc, next) {
     if (!exists) {
       await Configuration.create({ user: doc._id });
     }
-    next();
   } catch (err) {
-    next(err);
+    console.error('Error creating configuration:', err);
   }
+  next();
 });
 
 module.exports = mongoose.model("User", userSchema);

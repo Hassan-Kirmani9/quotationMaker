@@ -5,6 +5,7 @@ import PageTitle from '../../components/Typography/PageTitle'
 import SectionTitle from '../../components/Typography/SectionTitle'
 import { Input, Label, Button, Select, Textarea, HelperText } from '@windmill/react-ui'
 import { useCurrency } from '../../context/CurrencyContext'
+import { useAuth } from '../../context/AuthContext'
 import { FaTable, FaTrash, FaPlus, FaMinus } from 'react-icons/fa'
 
 const AutocompleteSelect = ({ value, onChange, options, placeholder, error, className }) => {
@@ -240,6 +241,7 @@ const MobileItemCard = ({ item, index, productsList, errors, handleItemChange, r
 function EditQuotations() {
   const history = useHistory()
   const { currency, formatCurrency, getCurrencySymbol } = useCurrency()
+  const { tenant } = useAuth()
   const { id } = useParams()
 
   const [formData, setFormData] = useState({
@@ -492,22 +494,25 @@ function EditQuotations() {
     setApiError('')
 
     try {
-    const quotationData = {
-  ...formData,
-  validUntil,
-  date: new Date(),
-  totalAmount: totalAmount,
-  subtotal: subtotal,
-  discountAmount: discountAmount,
-  taxAmount: taxAmount,
-  items: quotationItems.map(item => ({
-    product: item.product,
-    description: item.description,
-    quantity: parseFloat(item.quantity),
-    unitPrice: parseFloat(item.unitPrice),
-    discountValue: parseFloat(item.discountValue) || 0
-  }))
-}
+      const quotationData = {
+        ...formData,
+        validUntil,
+        date: new Date(),
+        totalAmount: totalAmount,
+        tenant: localStorage.getItem('tenant') || sessionStorage.getItem('tenant'),
+
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        taxAmount: taxAmount,
+        tenant: tenant?.id,
+        items: quotationItems.map(item => ({
+          product: item.product,
+          description: item.description,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          discountValue: parseFloat(item.discountValue) || 0
+        }))
+      }
 
       const response = await patch(`/quotations/${id}`, quotationData)
 
@@ -979,7 +984,7 @@ function EditQuotations() {
               </div>
 
               {/* Total Amount */}
-              <div className="flex justify-between items-center p-4  rounded-lg ">
+              <div className="flex justify-between items-center p-4  rounded-lg dark:text-gray-400">
                 <span className="text-lg font-bold ">Total Amount:</span>
                 <span className="text-lg font-bold ">{currency} {totalAmount.toFixed(2)}</span>
               </div>
@@ -987,7 +992,7 @@ function EditQuotations() {
           </div>
 
           {/* Action Buttons - Responsive Layout */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-6">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-0 sm:space-x-4 mt-6">
             <Button
               type="button"
               layout="outline"

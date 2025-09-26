@@ -274,7 +274,7 @@ function Clients() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-                    <p className="mt-4 text-gray-600">Loading clients...</p>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading clients...</p>
                 </div>
             </div>
         )
@@ -439,7 +439,7 @@ function Clients() {
                                 >
                                     {}
                                     <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight">
+                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight dark:text-gray-400">
                                             {client.name}
                                         </h3>
                                         <div className="flex space-x-2">
@@ -461,7 +461,7 @@ function Clients() {
                                     </div>
 
                                     {}
-                                    <div className="flex items-center mb-3 text-gray-600">
+                                    <div className="flex items-center mb-3 text-gray-600 dark:text-gray-400">
                                         <IoBusinessOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm font-medium">
                                             {client.businessName}
@@ -469,7 +469,7 @@ function Clients() {
                                     </div>
 
                                     {}
-                                    <div className="flex items-center mb-3 text-gray-600">
+                                    <div className="flex items-center mb-3 text-gray-600 dark:text-gray-400">
                                         <IoMail className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm break-all">
                                             {client.email}
@@ -477,7 +477,7 @@ function Clients() {
                                     </div>
 
                                     {}
-                                    <div className="flex items-center mb-3 text-gray-600">
+                                    <div className="flex items-center mb-3 text-gray-600 dark:text-gray-400">
                                         <IoCall className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <div className="text-sm">
                                             <div>{client.mobileNo}</div>
@@ -490,7 +490,7 @@ function Clients() {
                                     </div>
 
                                     {}
-                                    <div className="flex items-center mb-3 text-gray-600">
+                                    <div className="flex items-center mb-3 text-gray-600 dark:text-gray-400">
                                         <IoLocation className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm">
                                             {client.city}, {client.country}
@@ -498,7 +498,7 @@ function Clients() {
                                     </div>
 
                                     {}
-                                    <div className="flex items-start text-gray-600">
+                                    <div className="flex items-start text-gray-600 dark:text-gray-400">
                                         <IoGlobe className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                                         <span className="text-sm">
                                             {client.address}

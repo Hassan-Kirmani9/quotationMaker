@@ -12,7 +12,9 @@ import {
     IoArrowBack,
     IoPrint,
     IoPencil,
-    IoCopy
+    IoCopy,
+    IoChevronDown,
+    IoChevronUp
 } from 'react-icons/io5'
 
 import toast from 'react-hot-toast';
@@ -26,6 +28,9 @@ function ViewCateringQuotation() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [pdfLoading, setPdfLoading] = useState(false)
+    const [expandedMenuItems, setExpandedMenuItems] = useState(false)
+    const [expandedExtraItems, setExpandedExtraItems] = useState(false)
+    const [expandedOtherItems, setExpandedOtherItems] = useState(false)
 
     const fetchCateringQuotation = async () => {
         try {
@@ -66,7 +71,7 @@ function ViewCateringQuotation() {
     const handleDownloadPDF = async () => {
         try {
             setPdfLoading(true)
-            const response = await fetch(`https://backend-white-water-1093.fly.dev/api/catering-quotations/${id}/pdf`, { // Make sure this matches your backend port
+            const response = await fetch(`http://localhost:5000/api/catering-quotations/${id}/pdf`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -105,6 +110,18 @@ function ViewCateringQuotation() {
         })
     }
 
+    const toggleMenuItems = () => {
+        setExpandedMenuItems(!expandedMenuItems)
+    }
+
+    const toggleExtraItems = () => {
+        setExpandedExtraItems(!expandedExtraItems)
+    }
+
+    const toggleOtherItems = () => {
+        setExpandedOtherItems(!expandedOtherItems)
+    }
+
     useEffect(() => {
         if (id) {
             fetchCateringQuotation()
@@ -139,7 +156,7 @@ function ViewCateringQuotation() {
                             layout="outline"
                             onClick={() => history.push('/app/catering-quotations')}
                         >
-                            Back to Catering Quotations
+                            Back to Quotations
                         </Button>
                     </div>
                 </div>
@@ -151,12 +168,12 @@ function ViewCateringQuotation() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="text-gray-500 text-xl mb-4">Catering quotation not found</div>
+                    <div className="text-gray-500 text-xl mb-4">Quotation not found</div>
                     <Button
                         layout="outline"
                         onClick={() => history.push('/app/catering-quotations')}
                     >
-                        Back to Catering Quotations
+                        Back to Quotations
                     </Button>
                 </div>
             </div>
@@ -176,7 +193,7 @@ function ViewCateringQuotation() {
                                 <div className="mb-4">
                                     <div className="flex items-start justify-between mb-1">
                                         <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-gray-200">
-                                            Catering Quotation
+                                            Quotation
                                         </h2>
                                         <Button
                                             layout="link"
@@ -260,8 +277,78 @@ function ViewCateringQuotation() {
 
                             {cateringQuotation.menu?.items && cateringQuotation.menu.items.length > 0 && (
                                 <div>
-                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Menu Items</h4>
-                                    <div className="overflow-x-auto">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Menu Items</h4>
+                                        <button
+                                            onClick={toggleMenuItems}
+                                            className="flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-gray-400 dark:hover:text-blue-300 transition-colors"
+                                        >
+                                            {expandedMenuItems ? (
+                                                <>
+                                                    Collapse <IoChevronUp className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Expand <IoChevronDown className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    {expandedMenuItems && (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                        <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                            Item Name
+                                                        </th>
+                                                        <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                            Amount
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {cateringQuotation.menu.items.map((item, index) => (
+                                                        <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
+                                                            <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
+                                                                {item.name || 'N/A'}
+                                                            </td>
+                                                            <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                                {item.amount}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </CardBody>
+                    </Card>
+
+                    {cateringQuotation.extras?.items && cateringQuotation.extras.items.length > 0 && (
+                        <Card>
+                            <CardBody>
+                                <div className="flex items-center justify-between mb-4">
+                                    <SectionTitle>Extra Items</SectionTitle>
+                                    <button
+                                        onClick={toggleExtraItems}
+                                        className="flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-gray-400 dark:hover:text-blue-300 transition-colors"
+                                    >
+                                        {expandedExtraItems ? (
+                                            <>
+                                                Collapse <IoChevronUp className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                Expand <IoChevronDown className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                                {expandedExtraItems && (
+                                    <div className="overflow-x-auto mb-4">
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -274,7 +361,7 @@ function ViewCateringQuotation() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {cateringQuotation.menu.items.map((item, index) => (
+                                                {cateringQuotation.extras.items.map((item, index) => (
                                                     <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
                                                         <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
                                                             {item.name || 'N/A'}
@@ -287,41 +374,7 @@ function ViewCateringQuotation() {
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
-                            )}
-                        </CardBody>
-                    </Card>
-
-                    {cateringQuotation.extras?.items && cateringQuotation.extras.items.length > 0 && (
-                        <Card>
-                            <CardBody>
-                                <SectionTitle>Extra Items</SectionTitle>
-                                <div className="overflow-x-auto mb-4">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                    Item Name
-                                                </th>
-                                                <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                    Amount
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {cateringQuotation.extras.items.map((item, index) => (
-                                                <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
-                                                    <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
-                                                        {item.name || 'N/A'}
-                                                    </td>
-                                                    <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                        {item.amount}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                )}
                                 <div className="flex justify-end">
                                     <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -336,33 +389,51 @@ function ViewCateringQuotation() {
                     {cateringQuotation.others?.items && cateringQuotation.others.items.length > 0 && (
                         <Card>
                             <CardBody>
-                                <SectionTitle>Other Items</SectionTitle>
-                                <div className="overflow-x-auto mb-4">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                    Item Name
-                                                </th>
-                                                <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
-                                                    Amount
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {cateringQuotation.others.items.map((item, index) => (
-                                                <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
-                                                    <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
-                                                        {item.name || 'N/A'}
-                                                    </td>
-                                                    <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
-                                                        {item.amount}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div className="flex items-center justify-between mb-4">
+                                    <SectionTitle>Other Items</SectionTitle>
+                                    <button
+                                        onClick={toggleOtherItems}
+                                        className="flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-gray-400 dark:hover:text-blue-300 transition-colors"
+                                    >
+                                        {expandedOtherItems ? (
+                                            <>
+                                                Collapse <IoChevronUp className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                Expand <IoChevronDown className="w-4 h-4 ml-1 dark:text-gray-400" />
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
+                                {expandedOtherItems && (
+                                    <div className="overflow-x-auto mb-4">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                    <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                        Item Name
+                                                    </th>
+                                                    <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+                                                        Amount
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {cateringQuotation.others.items.map((item, index) => (
+                                                    <tr key={index} className="border-b border-gray-100 dark:border-gray-600">
+                                                        <td className="py-3 px-2 text-gray-800 dark:text-gray-200">
+                                                            {item.name || 'N/A'}
+                                                        </td>
+                                                        <td className="py-3 px-2 text-right font-medium text-gray-800 dark:text-gray-200">
+                                                            {item.amount}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                                 <div className="flex justify-end">
                                     <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -498,7 +569,7 @@ function ViewCateringQuotation() {
                                     onClick={() => history.push('/app/catering-quotations')}
                                 >
                                     <IoArrowBack className="w-4 h-4 mr-2" />
-                                    Back to All Catering Quotations
+                                    Back to All Quotations
                                 </Button>
                                 <Button
                                     block

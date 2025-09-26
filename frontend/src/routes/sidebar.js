@@ -1,43 +1,43 @@
 const routes = [
   {
     path: '/app/dashboard',
-    icon: 'PeopleIcon',
+    icon: 'HomeIcon',
     name: 'Dashboard',
     requiredPage: '/dashboard'
   },
   {
     path: '/app/quotations',
-    icon: 'FormsIcon',
+    icon: 'Quotation',
     name: 'Quotations',
     requiredPage: '/quotations'
   },
   {
     path: '/app/clients',
-    icon: 'HomeIcon',
+    icon: 'PeopleIcon',
     name: 'Clients',
     requiredPage: '/clients'
   },
   {
     path: '/app/catering-quotations',
-    icon: 'FormsIcon', 
-    name: 'Catering Quotations',
+    icon: 'Catering',
+    name: 'Quotations',
     requiredPage: '/catering-quotations'
   },
   {
     path: '/app/products',
-    icon: 'ChartsIcon',
+    icon: 'Products',
     name: 'Products',
     requiredPage: '/products'
   },
   {
     path: '/app/sizes',
-    icon: 'ButtonsIcon',
+    icon: 'Sizes',
     name: 'Sizes',
     requiredPage: '/sizes'
   },
   {
     path: '/app/configuration',
-    icon: 'MenuIcon',
+    icon: 'Cog',
     name: 'Configuration',
     requiredPage: '/configuration'
   }

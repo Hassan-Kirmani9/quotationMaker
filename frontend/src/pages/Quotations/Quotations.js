@@ -333,16 +333,16 @@ function Quotations() {
                                         <div className={`${getStatusColor(quotation.status)} text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide`}>
                                             {quotation.status === 'accepted' ? 'APPROVED' : quotation.status.toUpperCase()}
                                         </div>
-                                        <div className="text-gray-600 font-medium text-sm">
+                                        <div className="text-gray-600 font-medium text-sm dark:text-gray-400">
                                             {getDisplayNumber(quotation)}
                                         </div>
                                     </div>
 
-                                    <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight">
+                                    <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight dark:text-gray-400">
                                         {quotation.title}
                                     </h3>
 
-                                    <div className="flex items-center mb-2 text-gray-600">
+                                    <div className="flex items-center mb-2 text-gray-600 dark:text-gray-400">
                                         <IoPerson className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm font-medium">
                                             {quotation.client?.name || 'N/A'}
@@ -350,7 +350,7 @@ function Quotations() {
                                     </div>
 
                                     {quotation.client?.businessName && (
-                                        <div className="flex items-center mb-2 text-gray-600">
+                                        <div className="flex items-center mb-2 text-gray-600 dark:text-gray-400">
                                             <IoBusinessOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                             <span className="text-sm">
                                                 {quotation.client.businessName}
@@ -358,7 +358,7 @@ function Quotations() {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center mb-4 text-gray-600">
+                                    <div className="flex items-center mb-4 text-gray-600 dark:text-gray-400">
                                         <IoCalendarOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className={`text-sm ${new Date(quotation.validUntil) < new Date() ? 'text-red-600' : ''}`}>
                                             Valid until {new Date(quotation.validUntil).toLocaleDateString('en-US', {

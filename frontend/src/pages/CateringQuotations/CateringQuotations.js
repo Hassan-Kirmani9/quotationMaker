@@ -137,11 +137,11 @@ function CateringQuotations() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'quotation': 
+            case 'quotation':
                 return 'bg-blue-500'
-            case 'invoice': 
+            case 'invoice':
                 return 'bg-green-500'
-            default: 
+            default:
                 return 'bg-gray-500'
         }
     }
@@ -156,7 +156,7 @@ function CateringQuotations() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
                 </div>
             </div>
         )
@@ -182,13 +182,13 @@ function CateringQuotations() {
     return (
         <>
             <div className="flex justify-between items-center mb-6">
-                <PageTitle>Catering Quotations</PageTitle>
+                <PageTitle>Quotations</PageTitle>
                 <Button
                     style={{ backgroundColor: "#AA1A21" }}
                     className="text-white"
                     onClick={() => history.push('/app/catering-quotations/create')}
                 >
-                    Create Catering Quotation
+                    Create
                 </Button>
             </div>
 
@@ -344,19 +344,19 @@ function CateringQuotations() {
                                     className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 shadow-sm border border-orange-200 relative"
                                 >
                                     <div className="flex justify-between items-start mb-4">
-<div className={`${getStatusColor(quotation.status)} text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide`}>
+                                        <div className={`${getStatusColor(quotation.status)} text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide`}>
                                             {quotation.status.toUpperCase()}
                                         </div>
-                                        <div className="text-gray-600 font-medium text-sm">
+                                        <div className="text-gray-600 font-medium text-sm dark:text-gray-400">
                                             #{quotation._id?.slice(-8).toUpperCase() || 'N/A'}
                                         </div>
                                     </div>
 
-                                    <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight">
+                                    <h3 className="text-gray-800 font-semibold text-lg mb-4 leading-tight dark:text-gray-200">
                                         Catering Quotation
                                     </h3>
 
-                                    <div className="flex items-center mb-2 text-gray-600">
+                                    <div className="flex items-center mb-2 text-gray-600 dark:text-gray-400">
                                         <IoPerson className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm font-medium">
                                             {quotation.client?.name || 'N/A'}
@@ -364,7 +364,7 @@ function CateringQuotations() {
                                     </div>
 
                                     {quotation.client?.businessName && (
-                                        <div className="flex items-center mb-2 text-gray-600">
+                                        <div className="flex items-center mb-2 text-gray-600 dark:text-gray-400">
                                             <IoBusinessOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                             <span className="text-sm">
                                                 {quotation.client.businessName}
@@ -372,13 +372,13 @@ function CateringQuotations() {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center mb-2 text-gray-600">
+                                    <div className="flex items-center mb-2 text-gray-600 dark:text-gray-400">
                                         <span className="text-sm font-medium">
                                             Thaals: {quotation.menu?.numberOfThaals || 0}
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center mb-4 text-gray-600">
+                                    <div className="flex items-center mb-4 text-gray-600 dark:text-gray-400">
                                         <IoCalendarOutline className="w-4 h-4 mr-2 flex-shrink-0" />
                                         <span className="text-sm">
                                             Created on {new Date(quotation.createdAt).toLocaleDateString('en-US', {

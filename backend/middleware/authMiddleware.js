@@ -1,18 +1,26 @@
 const User = require("../models/User");
 const { verifyToken } = require("../utils/auth");
 
-
 const protect = (roles = []) => async (req, res, next) => {
     try {
+      let tokenString = null;
+      
       const authHeader = req.header("Authorization");
-      if (!authHeader?.startsWith("Bearer ")) {
+      if (authHeader?.startsWith("Bearer ")) {
+        tokenString = authHeader;
+      } 
+      else if (req.query.token) {
+        tokenString = `Bearer ${req.query.token}`;
+      }
+      
+      if (!tokenString) {
         return res.status(401).json({
           success: false,
           message: "Access denied. No token provided.",
         });
       }
 
-      let decoded = verifyToken(authHeader);
+      let decoded = verifyToken(tokenString);
       if (decoded == false) {
         return res.status(401).json({
           success: false,
@@ -44,7 +52,7 @@ const protect = (roles = []) => async (req, res, next) => {
             success: false,
             message: "Access denied. Insufficient role.",
           });
-        }
+          }
       }
 
       req.user = user;

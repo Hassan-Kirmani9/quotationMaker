@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { get } from '../../api/axios';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 import PageTitle from '../../components/Typography/PageTitle';
 import { Button } from '@windmill/react-ui';
 import {
@@ -22,6 +23,7 @@ import { ChartsIcon, MoneyIcon, PeopleIcon } from '../../icons';
 const Dashboard = () => {
     const history = useHistory();
     const { formatCurrency } = useCurrency();
+    const { user } = useAuth();
 
     const [loading, setLoading] = useState(true);
     
@@ -38,24 +40,75 @@ const Dashboard = () => {
         }
     });
 
+    const isCateringOnly = () => {
+        if (!user?.permissions) return false;
+        const permissions = user.permissions;
+        const hasCateringQuotations = permissions.includes('/catering-quotations');
+        const hasRegularQuotations = permissions.includes('/quotations');
+        const hasProducts = permissions.includes('/products');
+        const hasSizes = permissions.includes('/sizes');
+        
+        return hasCateringQuotations && !hasRegularQuotations && !hasProducts && !hasSizes;
+    };
+
+    const hasPermission = (permission) => {
+        if (!user?.permissions) return false;
+        return user.permissions.includes(permission);
+    };
+
+    const getQuotationsEndpoint = () => {
+        return isCateringOnly() ? '/catering-quotations' : '/quotations';
+    };
+
+    const getQuotationsRoute = () => {
+        return isCateringOnly() ? '/app/catering-quotations' : '/app/quotations';
+    };
+
+    const getQuotationCreateRoute = () => {
+        return isCateringOnly() ? '/app/catering-quotations/create' : '/app/quotations/create';
+    };
+
+    const getQuotationViewRoute = (id) => {
+        return isCateringOnly() ? `/app/catering-quotations/view/${id}` : `/app/quotations/view/${id}`;
+    };
+
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
             setError('');
 
-            const [quotationsRes, clientsRes, productsRes] = await Promise.all([
-                get('/quotations?limit=5&page=1'),
-                get('/clients?limit=5&page=1'),
-                get('/products?limit=5&page=1')
-            ]);
+            const promises = [];
+            const quotationsEndpoint = getQuotationsEndpoint();
+            
+            promises.push(get(`${quotationsEndpoint}?limit=5&page=1`));
+            
+            if (hasPermission('/clients')) {
+                promises.push(get('/clients?limit=5&page=1'));
+            } else {
+                promises.push(Promise.resolve({ success: true, data: { clients: [], pagination: { total: 0 } } }));
+            }
 
-            const quotations = quotationsRes.success ? quotationsRes.data.quotations : [];
+            if (hasPermission('/products')) {
+                promises.push(get('/products?limit=5&page=1'));
+            } else {
+                promises.push(Promise.resolve({ success: true, data: { products: [], pagination: { total: 0 } } }));
+            }
+
+            const [quotationsRes, clientsRes, productsRes] = await Promise.all(promises);
+
+            const quotationsKey = isCateringOnly() ? 'cateringQuotations' : 'quotations';
+            const quotations = quotationsRes.success ? (quotationsRes.data[quotationsKey] || quotationsRes.data.quotations || []) : [];
             const clients = clientsRes.success ? clientsRes.data.clients : [];
             const products = productsRes.success ? productsRes.data.products : [];
 
             const invoices = quotations.filter(q => q.status === 'invoice');
             const quotationStatus = quotations.filter(q => q.status === 'quotation');
-            const totalRevenue = invoices.reduce((sum, q) => sum + (q.totalAmount || 0), 0);
+            const totalRevenue = invoices.reduce((sum, q) => {
+                if (isCateringOnly()) {
+                    return sum + (q.costing?.grandTotal || 0);
+                }
+                return sum + (q.totalAmount || 0);
+            }, 0);
             const conversionRate = quotations.length > 0 ? (invoices.length / quotations.length) * 100 : 0;
 
             setDashboardData({
@@ -104,9 +157,7 @@ const Dashboard = () => {
                         </div>
                     )}
                 </div>
-                <div className={`p-3 rounded-lg ${color}`}>
-                    <Icon className="w-6 h-6 dark:text-white text-black" />
-                </div>
+       
             </div>
         </div>
     );
@@ -191,6 +242,51 @@ const Dashboard = () => {
         );
     }
 
+    const renderQuickActions = () => {
+        const actions = [];
+        
+        if (hasPermission('/quotations') || hasPermission('/catering-quotations')) {
+            actions.push(
+                <QuickAction
+                    key="quotation"
+                    title={isCateringOnly() ? "Create Catering Quotation" : "Create Quotation"}
+                    description={isCateringOnly() ? "Start a new catering quotation for your client" : "Start a new quotation for your client"}
+                    icon={IoDocumentText}
+                    color="bg-gradient-to-r from-indigo-500 to-indigo-600"
+                    onClick={() => history.push(getQuotationCreateRoute())}
+                />
+            );
+        }
+        
+        if (hasPermission('/clients')) {
+            actions.push(
+                <QuickAction
+                    key="client"
+                    title="Add Client"
+                    description="Register a new client in your system"
+                    icon={IoPeople}
+                    color="bg-gradient-to-r from-green-500 to-green-600"
+                    onClick={() => history.push('/app/clients/create')}
+                />
+            );
+        }
+        
+        if (hasPermission('/products')) {
+            actions.push(
+                <QuickAction
+                    key="product"
+                    title="Add Product"
+                    description="Add a new product to your catalog"
+                    icon={IoCart}
+                    color="bg-gradient-to-r from-purple-500 to-purple-600"
+                    onClick={() => history.push('/app/products/create')}
+                />
+            );
+        }
+        
+        return actions;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div className="p-6 space-y-8">
@@ -215,7 +311,7 @@ const Dashboard = () => {
                         color="bg-gradient-to-r from-blue-500 to-blue-600"
                     />
                     <MetricCard
-                        title="Pending Quotations"
+                        title={isCateringOnly() ? "Pending Catering Quotations" : "Pending Quotations"}
                         value={dashboardData.stats.pendingQuotations}
                         icon={FaRegClock}
                         color="bg-gradient-to-r from-yellow-500 to-yellow-600"
@@ -228,139 +324,139 @@ const Dashboard = () => {
                     />
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <QuickAction
-                            title="Create Quotation"
-                            description="Start a new quotation for your client"
-                            icon={IoDocumentText}
-                            color="bg-gradient-to-r from-indigo-500 to-indigo-600"
-                            onClick={() => history.push('/app/quotations/create')}
-                        />
-                        <QuickAction
-                            title="Add Client"
-                            description="Register a new client in your system"
-                            icon={IoPeople}
-                            color="bg-gradient-to-r from-green-500 to-green-600"
-                            onClick={() => history.push('/app/clients/create')}
-                        />
-                        <QuickAction
-                            title="Add Product"
-                            description="Add a new product to your catalog"
-                            icon={IoCart}
-                            color="bg-gradient-to-r from-purple-500 to-purple-600"
-                            onClick={() => history.push('/app/products/create')}
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Quotations</h2>
-                                <Button
-                                    layout="link"
-                                    onClick={() => history.push('/app/quotations')}
-                                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                >
-                                    View All
-                                </Button>
-                            </div>
+                {renderQuickActions().length > 0 && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {renderQuickActions()}
                         </div>
-                        <div className="p-2">
-                            {dashboardData.quotations.recent.length > 0 ? (
-                                dashboardData.quotations.recent.map((quotation) => (
-                                    <RecentItem
-                                        key={quotation._id}
-                                        title={quotation.quotationNo}
-                                        subtitle={quotation.title}
-                                        status={quotation.status}
-                                        amount={quotation.totalAmount}
-                                        date={quotation.createdAt}
-                                        onClick={() => history.push(`/app/quotations/view/${quotation._id}`)}
-                                    />
-                                ))
-                            ) : (
-                                <div className="p-8 text-center">
-                                    <IoDocumentText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                                    <p className="text-gray-500 dark:text-gray-400">No quotations yet</p>
+                    </div>
+                )}
+
+                <div className={`grid grid-cols-1 ${hasPermission('/clients') ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-6`}>
+                    {(hasPermission('/quotations') || hasPermission('/catering-quotations')) && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {isCateringOnly() ? "Recent Catering Quotations" : "Recent Quotations"}
+                                    </h2>
                                     <Button
-                                        onClick={() => history.push('/app/quotations/create')}
-                                        className="mt-3"
-                                        style={{ backgroundColor: "#AA1A21" }}
+                                        layout="link"
+                                        onClick={() => history.push(getQuotationsRoute())}
+                                        className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                                     >
-                                        Create First Quotation
+                                        View All
                                     </Button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Clients</h2>
-                                <Button
-                                    layout="link"
-                                    onClick={() => history.push('/app/clients')}
-                                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                >
-                                    View All
-                                </Button>
+                            </div>
+                            <div className="p-2">
+                                {dashboardData.quotations.recent.length > 0 ? (
+                                    dashboardData.quotations.recent.map((quotation) => (
+                                        <RecentItem
+                                            key={quotation._id}
+                                            title={quotation.quotationNo || `${isCateringOnly() ? 'Catering' : ''} Quotation`}
+                                            subtitle={quotation.title || quotation.client?.name}
+                                            status={quotation.status}
+                                            amount={isCateringOnly() ? quotation.costing?.grandTotal : quotation.totalAmount}
+                                            date={quotation.createdAt}
+                                            onClick={() => history.push(getQuotationViewRoute(quotation._id))}
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center">
+                                        <IoDocumentText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            {isCateringOnly() ? "No catering quotations yet" : "No quotations yet"}
+                                        </p>
+                                        <Button
+                                            onClick={() => history.push(getQuotationCreateRoute())}
+                                            className="mt-3"
+                                            style={{ backgroundColor: "#AA1A21" }}
+                                        >
+                                            {isCateringOnly() ? "Create First Catering Quotation" : "Create First Quotation"}
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <div className="p-2">
-                            {dashboardData.clients.recent.length > 0 ? (
-                                dashboardData.clients.recent.map((client) => (
-                                    <RecentItem
-                                        key={client._id}
-                                        title={client.name}
-                                        subtitle={client.businessName}
-                                        date={client.createdAt}
+                    )}
+
+                    {hasPermission('/clients') && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Clients</h2>
+                                    <Button
+                                        layout="link"
                                         onClick={() => history.push('/app/clients')}
-                                    />
-                                ))
-                            ) : (
-                                <div className="p-8 text-center">
-                                    <IoPeople className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                                    <p className="text-gray-500 dark:text-gray-400">No clients yet</p>
-                                    <Button
-                                        onClick={() => history.push('/app/clients/create')}
-                                        className="mt-3"
-                                        style={{ backgroundColor: "#AA1A21" }}
+                                        className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                                     >
-                                        Add First Client
+                                        View All
                                     </Button>
                                 </div>
-                            )}
+                            </div>
+                            <div className="p-2">
+                                {dashboardData.clients.recent.length > 0 ? (
+                                    dashboardData.clients.recent.map((client) => (
+                                        <RecentItem
+                                            key={client._id}
+                                            title={client.name}
+                                            subtitle={client.businessName}
+                                            date={client.createdAt}
+                                            onClick={() => history.push('/app/clients')}
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center">
+                                        <IoPeople className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                                        <p className="text-gray-500 dark:text-gray-400">No clients yet</p>
+                                        <Button
+                                            onClick={() => history.push('/app/clients/create')}
+                                            className="mt-3"
+                                            style={{ backgroundColor: "#AA1A21" }}
+                                        >
+                                            Add First Client
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-                            <ChartsIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    {(hasPermission('/quotations') || hasPermission('/catering-quotations')) && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+                            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <ChartsIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.quotations.total}</h3>
+                            <p className="text-gray-600 dark:text-gray-300">
+                                {isCateringOnly() ? "Total Catering Quotations" : "Total Quotations"}
+                            </p>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.quotations.total}</h3>
-                        <p className="text-gray-600 dark:text-gray-300">Total Quotations</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-                            <PeopleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    )}
+                    
+                    {hasPermission('/clients') && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <PeopleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.clients.total}</h3>
+                            <p className="text-gray-600 dark:text-gray-300">Total Clients</p>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.clients.total}</h3>
-                        <p className="text-gray-600 dark:text-gray-300">Total Clients</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-3">
-                            <MoneyIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    )}
+                    
+                    {hasPermission('/products') && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+                            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <MoneyIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.products.total}</h3>
+                            <p className="text-gray-600 dark:text-gray-300">Total Products</p>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.products.total}</h3>
-                        <p className="text-gray-600 dark:text-gray-300">Total Products</p>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
