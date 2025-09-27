@@ -21,11 +21,10 @@ const Size = lazy(() => import('../pages/Size/Size'))
 const EditProjects = lazy(() => import('../pages/Projects/EditProject'))
 
 const CreateProducts = lazy(() => import('../pages/Products/CreateProducts'))
-const Quotations = lazy(() => import('../pages/Quotations/Quotations'))
-const CreateQuotations = lazy(() => import('../pages/Quotations/CreateQuotations'))
+const QuotationsList = lazy(() => import('../pages/Quotations/QuotationsList'))
 const ViewQuotations = lazy(() => import('../pages/Quotations/ViewQuotations'))
 const EditQuotations = lazy(() => import('../pages/Quotations/EditQuotations'))
-const CateringQuotations = lazy(() => import('../pages/CateringQuotations/CateringQuotations'))
+const CreateQuotations = lazy(() => import('../pages/Quotations/CreateQuotations'))
 const CreateCateringQuotations = lazy(() => import('../pages/CateringQuotations/CreateCateringQuotations'))
 const EditCateringQuotations = lazy(() => import('../pages/CateringQuotations/EditCateringQuotations'))
 const ViewCateringQuotations = lazy(() => import('../pages/CateringQuotations/ViewCateringQuotations'))
@@ -70,7 +69,7 @@ const routes = [
   },
   {
     path: '/quotations',
-    component: Quotations,
+    component: QuotationsList,
     name: '/quotations'
   },
   {
@@ -95,7 +94,7 @@ const routes = [
   },
   {
     path: '/catering-quotations',
-    component: CateringQuotations,
+    component: QuotationsList,
     name: 'cateringQuotations'
   },
   {

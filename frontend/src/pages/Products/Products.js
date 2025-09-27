@@ -409,11 +409,11 @@ function Products() {
                             {dataTable.map((product) => (
                                 <div
                                     key={product._id}
-                                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative"
+                                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative rounded-lg"
                                 >
                                     {/* Header */}
                                     <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4">
+                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4 dark:text-gray-400">
                                             {product.name}
                                         </h3>
                                         <div className="flex space-x-2 flex-shrink-0">
@@ -435,9 +435,9 @@ function Products() {
                                     </div>
 
                                     {/* Size */}
-                                    <div className="flex items-center mb-3 text-gray-600">
+                                    <div className="flex items-center mb-3 text-gray-600 dark:text-gray-300">
                                         <IoResize className="w-4 h-4 mr-2 flex-shrink-0" />
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        <span className="inline-flex items-center px-4 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:text-purple-200 dark:bg-purple-600">
                                             {product.size?.name || 'No size'}
                                         </span>
                                     </div>
@@ -454,18 +454,18 @@ function Products() {
 
                                     {/* Purchase Price */}
                                     <div className="flex items-center mb-3 text-gray-600">
-                                        <IoPricetagsOutline className="w-4 h-4 mr-2 flex-shrink-0" />
+                                        <IoPricetagsOutline className="w-4 h-4 mr-2 flex-shrink-0 dark:text-gray-300" />
                                         <div className="text-sm">
-                                            <span className="text-gray-500">Purchase Price: </span>
-                                            <span className="font-medium">{formatCurrency(product.purchasePrice)}</span>
+                                            <span className="text-gray-500 dark:text-gray-300">Purchase Price: </span>
+                                            <span className="font-medium dark:text-gray-300">{formatCurrency(product.purchasePrice)}</span>
                                         </div>
                                     </div>
 
                                     {/* Selling Price */}
                                     <div className="flex items-center">
-                                        <IoPricetag className="w-5 h-5 mr-3 text-purple-600" />
+                                        <IoPricetag className="w-5 h-5 mr-3 text-purple-600 dark:text-gray-300" />
                                         <div>
-                                            <div className="text-xs text-gray-500 uppercase tracking-wide">Selling Price</div>
+                                            <div className="text-xs text-gray-500 uppercase tracking-wide dark:text-gray-300">Selling Price</div>
                                             <div className="text-2xl font-bold text-purple-700">
                                                 {formatCurrency(product.sellingPrice)}
                                             </div>

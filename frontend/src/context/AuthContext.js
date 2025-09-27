@@ -19,18 +19,17 @@ export const AuthProvider = ({ children }) => {
     return user.permissions.includes(permissionName)
   }
 
-  const getAllAvailablePages = () => {
+const getAllAvailablePages = () => {
     return [
       "/dashboard",
       "/quotations",
-      "/cateringQuotations",
+      "/catering-quotations",
       "/clients",
       "/products",
       "/sizes",
       "/configuration"
     ]
-  }
-
+}
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {

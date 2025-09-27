@@ -451,11 +451,11 @@ function Sizes() {
                             {dataTable.map((size) => (
                                 <div
                                     key={size._id}
-                                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative"
+                                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 shadow-sm border border-purple-200 relative dark:bg-gray-800 rounded-lg"
                                 >
                                     { }
                                     <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4">
+                                        <h3 className="text-gray-800 font-semibold text-lg leading-tight flex-1 pr-4 dark:text-gray-300">
                                             {size.name}
                                         </h3>
                                         <div className="flex space-x-2 flex-shrink-0">
@@ -479,7 +479,7 @@ function Sizes() {
                                     { }
                                     <div className="flex items-center">
                                         <IoResize className="w-4 h-4 mr-2 text-purple-600" />
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
                                             Created: {formatDate(size.createdAt)}
                                         </div>
                                     </div>

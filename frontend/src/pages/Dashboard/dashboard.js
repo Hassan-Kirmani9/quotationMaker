@@ -14,7 +14,11 @@ import {
     IoAdd,
     IoArrowUp,
     IoArrowDown,
-    IoCalendarOutline
+    IoCalendarOutline,
+    IoPersonCircleOutline,
+    IoLogOutOutline,
+    IoContrastOutline,
+    IoChevronForward
 } from 'react-icons/io5';
 import { FaRegClock } from "react-icons/fa";
 
@@ -26,7 +30,7 @@ const Dashboard = () => {
     const { user } = useAuth();
 
     const [loading, setLoading] = useState(true);
-    
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const [error, setError] = useState('');
     const [dashboardData, setDashboardData] = useState({
         quotations: { total: 0, recent: [] },
@@ -47,12 +51,15 @@ const Dashboard = () => {
         const hasRegularQuotations = permissions.includes('/quotations');
         const hasProducts = permissions.includes('/products');
         const hasSizes = permissions.includes('/sizes');
-        
+
         return hasCateringQuotations && !hasRegularQuotations && !hasProducts && !hasSizes;
     };
 
     const hasPermission = (permission) => {
         if (!user?.permissions) return false;
+        if (permission === '/catering-quotations') {
+            return user.permissions.includes('/catering-quotations') || user.permissions.includes('cateringQuotations');
+        }
         return user.permissions.includes(permission);
     };
 
@@ -79,9 +86,9 @@ const Dashboard = () => {
 
             const promises = [];
             const quotationsEndpoint = getQuotationsEndpoint();
-            
+
             promises.push(get(`${quotationsEndpoint}?limit=5&page=1`));
-            
+
             if (hasPermission('/clients')) {
                 promises.push(get('/clients?limit=5&page=1'));
             } else {
@@ -144,12 +151,33 @@ const Dashboard = () => {
         fetchDashboardData();
     }, []);
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'invoice':
+                return '#10B981';
+            case 'quotation':
+                return '#3B82F6';
+            case 'sent':
+                return '#F59E0B';
+            case 'viewed':
+                return '#8B5CF6';
+            case 'draft':
+                return '#6B7280';
+            default:
+                return '#EF4444';
+        }
+    };
+    const formatRevenueDisplay = (amount) => {
+        const formatted = formatCurrency(amount);
+        // Remove .00 from the end if present
+        return formatted.replace(/\.00$/, '');
+    }
     const MetricCard = ({ title, value, icon: Icon, color, trend }) => (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
                     {trend && (
                         <div className={`flex items-center mt-2 text-sm ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {trend > 0 ? <IoArrowUp className="w-4 h-4 mr-1" /> : <IoArrowDown className="w-4 h-4 mr-1" />}
@@ -157,7 +185,6 @@ const Dashboard = () => {
                         </div>
                     )}
                 </div>
-       
             </div>
         </div>
     );
@@ -199,14 +226,13 @@ const Dashboard = () => {
                     <p className="font-semibold text-gray-900 dark:text-white">{formatCurrency(amount)}</p>
                 )}
                 {status && (
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        status === 'invoice' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${status === 'invoice' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
                         status === 'quotation' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
-                        status === 'sent' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
-                        status === 'viewed' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
-                        status === 'draft' ? 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100' :
-                        'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
-                    }`}>
+                            status === 'sent' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
+                                status === 'viewed' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                                    status === 'draft' ? 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100' :
+                                        'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                        }`}>
                         {status.charAt(0).toUpperCase() + status.slice(1)}
                     </span>
                 )}
@@ -244,20 +270,20 @@ const Dashboard = () => {
 
     const renderQuickActions = () => {
         const actions = [];
-        
+
         if (hasPermission('/quotations') || hasPermission('/catering-quotations')) {
             actions.push(
                 <QuickAction
                     key="quotation"
-                    title={isCateringOnly() ? "Create Catering Quotation" : "Create Quotation"}
-                    description={isCateringOnly() ? "Start a new catering quotation for your client" : "Start a new quotation for your client"}
+                    title={isCateringOnly() ? "Create Quotation" : "Create Quotation"}
+                    description={isCateringOnly() ? "Start a new Quotation for your client" : "Start a new quotation for your client"}
                     icon={IoDocumentText}
                     color="bg-gradient-to-r from-indigo-500 to-indigo-600"
                     onClick={() => history.push(getQuotationCreateRoute())}
                 />
             );
         }
-        
+
         if (hasPermission('/clients')) {
             actions.push(
                 <QuickAction
@@ -270,7 +296,7 @@ const Dashboard = () => {
                 />
             );
         }
-        
+
         if (hasPermission('/products')) {
             actions.push(
                 <QuickAction
@@ -283,13 +309,309 @@ const Dashboard = () => {
                 />
             );
         }
-        
+
         return actions;
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="p-6 space-y-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900" >
+            <div
+                style={{
+                    display: window.innerWidth < 768 ? 'grid' : 'none',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    padding: '16px'
+                }}
+            >
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Revenue</p>
+<p className="text-sm font-bold text-gray-900 dark:text-white">{formatRevenueDisplay(dashboardData.stats.totalRevenue)}</p>                        </div>
+                        <div style={{ width: '30px', height: '30px', backgroundColor: '#10B981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IoTrendingUp style={{ width: '20px', height: '20px', color: 'white' }} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Invoices</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{dashboardData.stats.acceptedQuotations}</p>
+                        </div>
+                        <div style={{ width: '30px', height: '30px', backgroundColor: '#3B82F6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IoCheckmarkCircle style={{ width: '20px', height: '20px', color: 'white' }} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{isCateringOnly() ? "Pending Quotations" : "Pending Quotations"}</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{dashboardData.stats.pendingQuotations}</p>
+                        </div>
+                        <div style={{ width: '30px', height: '30px', backgroundColor: '#F59E0B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FaRegClock style={{ width: '20px', height: '20px', color: 'white' }} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Conversion Rate</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{dashboardData.stats.conversionRate}%</p>
+                        </div>
+                        <div style={{ width: '30px', height: '30px', backgroundColor: '#8B5CF6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IoTrendingUp style={{ width: '20px', height: '20px', color: 'white' }} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                style={{
+                    display: window.innerWidth < 768 ? 'block' : 'none',
+                    padding: '0 16px',
+                    marginBottom: '24px'
+                }}
+            >
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {renderQuickActions().map((action, index) => (
+                        <button
+                            key={index}
+                            onClick={action.props.onClick}
+                            className="bg-white dark:bg-gray-800 rounded-xl p-4 text-left w-full border border-gray-200 dark:border-gray-700 shadow-sm"
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                <div style={{
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    backgroundColor: action.props.icon === IoDocumentText ? "#6366F1" : action.props.icon === IoPeople ? "#10B981" : "#8B5CF6"
+                                }}>
+                                    <action.props.icon style={{ width: '24px', height: '24px', color: 'white' }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">{action.props.title}</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{action.props.description}</p>
+                                </div>
+                                <IoChevronForward className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div
+                style={{
+                    display: window.innerWidth < 768 ? 'flex' : 'none',
+                    flexDirection: 'column',
+                    gap: '24px',
+                    padding: '0 16px',
+                    marginBottom: '24px'
+                }}
+            >
+                {(hasPermission('/quotations') || hasPermission('/catering-quotations')) && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {isCateringOnly() ? "Recent Quotations" : "Recent Quotations"}
+                                </h2>
+                                <Button
+                                    layout="link"
+                                    onClick={() => history.push(getQuotationsRoute())}
+                                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    style={{ fontSize: '14px' }}
+                                >
+                                    View All
+                                </Button>
+                            </div>
+                        </div>
+                        <div>
+                            {dashboardData.quotations.recent.length > 0 ? (
+                                dashboardData.quotations.recent.map((quotation, index) => (
+                                    <div
+                                        key={quotation._id}
+                                        onClick={() => history.push(getQuotationViewRoute(quotation._id))}
+                                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        style={{
+                                            borderBottom: index === dashboardData.quotations.recent.length - 1 ? 'none' : '1px solid'
+                                        }}
+                                    >
+                                        <div style={{ flex: 1 }}>
+                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                                                {quotation.quotationNo || `${isCateringOnly() ? 'Catering' : ''} Quotation`}
+                                            </h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">
+                                                {quotation.title || quotation.client?.name}
+                                            </p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <IoCalendarOutline className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {new Date(quotation.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right', marginLeft: '16px' }}>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                                                {formatCurrency(isCateringOnly() ? quotation.costing?.grandTotal : quotation.totalAmount)}
+                                            </p>
+                                            <span
+                                                style={{
+                                                    display: 'inline-block',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '10px',
+                                                    fontWeight: '600',
+                                                    textTransform: 'uppercase',
+                                                    color: 'white',
+                                                    backgroundColor: getStatusColor(quotation.status)
+                                                }}
+                                            >
+                                                {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{ padding: '32px', textAlign: 'center' }}>
+                                    <IoDocumentText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                                    <p className="text-base text-gray-500 dark:text-gray-400 mb-4">
+                                        {isCateringOnly() ? "No Quotations yet" : "No quotations yet"}
+                                    </p>
+                                    <Button
+                                        onClick={() => history.push(getQuotationCreateRoute())}
+                                        style={{ backgroundColor: "#AA1A21", color: 'white', fontSize: '14px', fontWeight: '600' }}
+                                    >
+                                        {isCateringOnly() ? "Create First Quotation" : "Create First Quotation"}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {hasPermission('/clients') && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Clients</h2>
+                                <Button
+                                    layout="link"
+                                    onClick={() => history.push('/app/clients')}
+                                    className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    style={{ fontSize: '14px' }}
+                                >
+                                    View All
+                                </Button>
+                            </div>
+                        </div>
+                        <div>
+                            {dashboardData.clients.recent.length > 0 ? (
+                                dashboardData.clients.recent.map((client, index) => (
+                                    <div
+                                        key={client._id}
+                                        onClick={() => history.push('/app/clients')}
+                                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        style={{
+                                            borderBottom: index === dashboardData.clients.recent.length - 1 ? 'none' : '1px solid'
+                                        }}
+                                    >
+                                        <div style={{ flex: 1 }}>
+                                            <h4 className="text-base font-medium text-gray-900 dark:text-white mb-1">
+                                                {client.name}
+                                            </h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                                                {client.businessName || "N/A"}
+                                            </p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <IoCalendarOutline className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {new Date(client.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{ padding: '32px', textAlign: 'center' }}>
+                                    <IoPeople className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                                    <p className="text-base text-gray-500 dark:text-gray-400 mb-4">No clients yet</p>
+                                    <Button
+                                        onClick={() => history.push('/app/clients/create')}
+                                        style={{ backgroundColor: "#AA1A21", color: 'white', fontSize: '14px', fontWeight: '600' }}
+                                    >
+                                        Add First Client
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div
+                style={{
+                    display: window.innerWidth < 768 ? 'grid' : 'none',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    padding: '0 16px',
+                    marginBottom: '100px'
+                }}
+            >
+                {(hasPermission('/quotations') || hasPermission('/catering-quotations')) && (
+                    <div
+                        className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 text-center cursor-pointer shadow-sm"
+                        onClick={() => history.push(getQuotationsRoute())}
+                    >
+                        <div style={{ width: '48px', height: '48px', backgroundColor: '#6366F120', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                            <ChartsIcon style={{ width: '24px', height: '24px', color: '#6366F1' }} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                            {dashboardData.quotations.total}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">
+                            {isCateringOnly() ? "Total Quotations" : "Total Quotations"}
+                        </p>
+                    </div>
+                )}
+
+                {hasPermission('/clients') && (
+                    <div
+                        className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 text-center cursor-pointer shadow-sm"
+                        onClick={() => history.push('/app/clients')}
+                    >
+                        <div style={{ width: '48px', height: '48px', backgroundColor: '#10B98120', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                            <PeopleIcon style={{ width: '24px', height: '24px', color: '#10B981' }} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                            {dashboardData.clients.total}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Total Clients</p>
+                    </div>
+                )}
+
+                {hasPermission('/products') && (
+                    <div
+                        className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 text-center cursor-pointer shadow-sm"
+                        onClick={() => history.push('/app/products')}
+                    >
+                        <div style={{ width: '48px', height: '48px', backgroundColor: '#8B5CF620', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                            <MoneyIcon style={{ width: '24px', height: '24px', color: '#8B5CF6' }} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                            {dashboardData.products.total}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Total Products</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="p-6 space-y-8" style={{ display: window.innerWidth < 768 ? 'none' : 'block' }}>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
                     <div>
                         <PageTitle>Dashboard</PageTitle>
@@ -311,7 +633,7 @@ const Dashboard = () => {
                         color="bg-gradient-to-r from-blue-500 to-blue-600"
                     />
                     <MetricCard
-                        title={isCateringOnly() ? "Pending Catering Quotations" : "Pending Quotations"}
+                        title={isCateringOnly() ? "Pending Quotations" : "Pending Quotations"}
                         value={dashboardData.stats.pendingQuotations}
                         icon={FaRegClock}
                         color="bg-gradient-to-r from-yellow-500 to-yellow-600"
@@ -339,7 +661,7 @@ const Dashboard = () => {
                             <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {isCateringOnly() ? "Recent Catering Quotations" : "Recent Quotations"}
+                                        {isCateringOnly() ? "Recent Quotations" : "Recent Quotations"}
                                     </h2>
                                     <Button
                                         layout="link"
@@ -367,14 +689,14 @@ const Dashboard = () => {
                                     <div className="p-8 text-center">
                                         <IoDocumentText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                                         <p className="text-gray-500 dark:text-gray-400">
-                                            {isCateringOnly() ? "No catering quotations yet" : "No quotations yet"}
+                                            {isCateringOnly() ? "No Quotations yet" : "No quotations yet"}
                                         </p>
                                         <Button
                                             onClick={() => history.push(getQuotationCreateRoute())}
                                             className="mt-3"
                                             style={{ backgroundColor: "#AA1A21" }}
                                         >
-                                            {isCateringOnly() ? "Create First Catering Quotation" : "Create First Quotation"}
+                                            {isCateringOnly() ? "Create First Quotation" : "Create First Quotation"}
                                         </Button>
                                     </div>
                                 )}
@@ -433,11 +755,11 @@ const Dashboard = () => {
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{dashboardData.quotations.total}</h3>
                             <p className="text-gray-600 dark:text-gray-300">
-                                {isCateringOnly() ? "Total Catering Quotations" : "Total Quotations"}
+                                {isCateringOnly() ? "Total Quotations" : "Total Quotations"}
                             </p>
                         </div>
                     )}
-                    
+
                     {hasPermission('/clients') && (
                         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
                             <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -447,7 +769,7 @@ const Dashboard = () => {
                             <p className="text-gray-600 dark:text-gray-300">Total Clients</p>
                         </div>
                     )}
-                    
+
                     {hasPermission('/products') && (
                         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
                             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-3">

@@ -71,7 +71,7 @@ function ViewCateringQuotation() {
     const handleDownloadPDF = async () => {
         try {
             setPdfLoading(true)
-            const response = await fetch(`http://localhost:5000/api/catering-quotations/${id}/pdf`, {
+            const response = await fetch(`https://backend-white-water-1093.fly.dev/api/catering-quotations/${id}/pdf`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`

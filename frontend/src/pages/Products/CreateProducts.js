@@ -156,7 +156,7 @@ function CreateProducts() {
           onClick={handleCancel}
           disabled={loading}
         >
-          Back to Products
+          Back
         </Button>
       </div>
 

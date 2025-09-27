@@ -28,6 +28,9 @@ import {
 import toast from 'react-hot-toast';
 import { useCurrency } from '../../context/CurrencyContext'
 
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+
 function ViewQuotations() {
     const history = useHistory()
     const { id } = useParams()
@@ -89,38 +92,56 @@ function ViewQuotations() {
         }
     }
 
-    const handleDownloadPDF = async () => {
-        try {
-            setPdfLoading(true)
-            const response = await fetch(`http://localhost:5000/api/quotations/${id}/generate-pdf`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            })
+const handleDownloadPDF = async () => {
+    try {
+        setPdfLoading(true)
+        const response = await fetch(`https://backend-white-water-1093.fly.dev/api/quotations/${id}/generate-pdf`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
 
-            if (response.ok) {
-                const blob = await response.blob()
+        if (response.ok) {
+            const blob = await response.blob()
+            const fileName = `${getDisplayNumber()}.pdf`
+            
+            // Check if running on mobile (Capacitor) or web
+            if (Capacitor.isNativePlatform()) {
+                // Mobile: Use Capacitor Filesystem
+                const arrayBuffer = await blob.arrayBuffer()
+                const base64Data = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+                
+                const result = await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64Data,
+                    directory: Directory.Documents,
+                    encoding: 'base64'
+                })
+                
+                toast.success(`PDF saved to Documents folder: ${fileName}`)
+            } else {
+                // Web: Use traditional download
                 const url = window.URL.createObjectURL(blob)
                 const a = document.createElement('a')
                 a.href = url
-                a.download = `${getDisplayNumber()}.pdf`
+                a.download = fileName
                 document.body.appendChild(a)
                 a.click()
                 window.URL.revokeObjectURL(url)
                 document.body.removeChild(a)
                 toast.success('PDF downloaded successfully!')
-            } else {
-                toast.error('Failed to download PDF')
             }
-        } catch (error) {
-            console.error('Error downloading PDF:', error)
+        } else {
             toast.error('Failed to download PDF')
-        } finally {
-            setPdfLoading(false)
         }
+    } catch (error) {
+        console.error('Error downloading PDF:', error)
+        toast.error('Failed to download PDF')
+    } finally {
+        setPdfLoading(false)
     }
-
+}
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A'
         return new Date(dateString).toLocaleDateString('en-US', {
